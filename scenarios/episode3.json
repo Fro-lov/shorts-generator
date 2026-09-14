@@ -1,0 +1,65 @@
+{
+  "episode_id": "3",
+  "game": "Far Cry 6",
+  "bug_title": "Смертоносная Дверь",
+  "gameplay": {
+    "source": "assets/downloads/cyberpunk_door_kill.mp4",
+    "cut_time": 5.3
+  },
+  "blocks": [
+    {
+      "id": "hook",
+      "text": "Вы спасли важного повстанца из тюрьмы и отбили десять волн спецназа...",
+      "visual_type": "gameplay"
+    },
+    {
+      "id": "fail",
+      "text": "И тут его насмерть сбивает обычная комнатная дверь! Миссия с треском провалена!",
+      "visual_type": "gameplay",
+      "memes": [
+        {
+          "file": "assets/memes/fbi_framed.png",
+          "ratio": 0.45,
+          "sfx": "assets/sfx/metal_pipe.mp3"
+        },
+        {
+          "file": "assets/memes/wasted_framed.png",
+          "ratio": 0.55,
+          "sfx": "assets/sfx/gta_wasted.mp3"
+        }
+      ]
+    },
+    {
+      "id": "investigation",
+      "text": "Начинаем расследование: как дверная створка превратилась в самого смертоносного киллера в игре?",
+      "visual_type": "gameplay",
+      "trigger_bgm": true,
+      "sfx": "assets/sfx/vine_boom.mp3"
+    },
+    {
+      "id": "step1",
+      "text": "Оказывается, анимация открывания двигала дверь как кинематический объект с абсолютно бесконечной массой.",
+      "visual_type": "diagram_door_step1",
+      "sfx": "assets/sfx/windows_error.mp3"
+    },
+    {
+      "id": "step2",
+      "text": "В момент контакта движок посчитал это как лобовой таран БелАЗом на скорости двести километров в час и нанёс девять тысяч урона за один тик!",
+      "visual_type": "split_diagram_and_meme",
+      "diagram_type": "diagram_door_step2",
+      "meme": "assets/memes/belaz_framed.png",
+      "sfx": "assets/sfx/vine_boom.mp3"
+    },
+    {
+      "id": "fix",
+      "text": "Исправляется это элементарно: дверь должна проверять препятствия и не наносить физический урон союзникам.",
+      "visual_type": "code_card_door",
+      "sfx": "assets/sfx/mario_1up.mp3"
+    },
+    {
+      "id": "outro",
+      "text": "Мораль: никогда не бегите впереди двери, если её программировали за ночь до релиза! Подписывайся на канал!",
+      "visual_type": "gameplay"
+    }
+  ]
+}
