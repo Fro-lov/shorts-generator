@@ -24,6 +24,7 @@ from src.core.episode2_visuals import Episode2VisualsGenerator
 from src.core.output_manager import EpisodeOutputManager
 from src.core.music_generator import get_random_bgm
 from src.core.youtube_downloader import YouTubeDownloader
+from src.core.metadata_generator import MetadataGenerator
 
 
 class FFmpegInputManager:
@@ -343,10 +344,19 @@ class ShortsEngine:
                 f_cmd = [FFMPEG_PATH, "-y", "-ss", str(t), "-i", str(final_mp4), "-vframes", "1", "-q:v", "2", str(f_path)]
                 subprocess.run(f_cmd, capture_output=True)
 
+        # Generate Metadata & Descriptions
+        meta = MetadataGenerator.generate(
+            scenario_data=self.data,
+            output_dir=self.mgr.episode_dir,
+            duration=total_duration
+        )
+
         print(f"\n✨ [УСПЕХ] ВЫПУСК #{self.episode_id} УСПЕШНО СОБРАН: {final_mp4}")
+        print(f"📝 Описание и теги сохранены в: {self.mgr.episode_dir / 'description.txt'}")
         return {
             "final_video": final_mp4,
             "duration": total_duration,
+            "metadata": meta,
             "bgm": bgm_path.name,
             "blocks": block_timings
         }
