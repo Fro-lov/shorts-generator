@@ -1,0 +1,71 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Output directory (generated video episodes)
+output/*
+!output/.gitkeep
+
+# Large assets and downloads (keep folder structure via .gitkeep)
+assets/downloads/*
+!assets/downloads/.gitkeep
+
+assets/memes/*
+!assets/memes/.gitkeep
+!assets/memes/video/
+assets/memes/video/*
+!assets/memes/video/.gitkeep
+
+assets/music/*
+!assets/music/.gitkeep
+!assets/music/ambient/
+assets/music/ambient/*
+!assets/music/ambient/.gitkeep
+
+assets/sfx/*
+!assets/sfx/.gitkeep
+
+# Secrets / credentials / OAuth tokens (Google Cloud / YouTube API)
+*.env
+*.pickle
+client_secrets.json
+youtube_token.pickle
+oauth_credentials.json
+
+# OS generated files
+.DS_Store
+Thumbs.db

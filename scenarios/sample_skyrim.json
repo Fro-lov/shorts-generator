@@ -1,0 +1,16 @@
+{
+  "game_title": "The Elder Scrolls V: Skyrim",
+  "bug_name": "Ведро на голове торговца",
+  "script": "В Скайриме можно надеть ведро на голову любому торговцу и безнаказанно украсть все товары с полок. Почему это работало? Движок Скайрима проверял прямую видимость между глазами NPC и предметом с помощью простого Raycast луча. Ведро надетое сверху имело физическую коллизию, которая блокировала луч видимости, но движок считал, что NPC просто находится в укрытии и не поднимал тревогу.",
+  "code_card": {
+    "title": "skyrim_stealth.cpp (Raycast Occlusion)",
+    "lines": [
+      {"text": "if (Raycast(npc.eyes, player.hands, &hit)) {", "type": "normal", "line_no": "88"},
+      {"text": "    if (hit.is_solid) return CANNOT_SEE; // BUG: Bucket is solid!", "type": "bug", "line_no": "89"},
+      {"text": "    if (hit.is_solid && !hit.is_carried_item) return CANNOT_SEE;", "type": "fix", "line_no": "89"},
+      {"text": "}", "type": "normal", "line_no": "90"}
+    ],
+    "start_time": 7.0,
+    "end_time": 22.0
+  }
+}
