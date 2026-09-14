@@ -60,6 +60,7 @@ assets/sfx/*
 !assets/sfx/.gitkeep
 
 # Secrets / credentials / OAuth tokens (Google Cloud / YouTube API)
+secrets/
 *.env
 *.pickle
 client_secrets.json
