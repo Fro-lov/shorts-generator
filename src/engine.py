@@ -112,8 +112,12 @@ class ShortsEngine:
         bgm_path = get_random_bgm(ambient_dir)
 
         # 3. Scene-based Block TTS
-        print("\n[2/6] Синтез речи по смысловым блокам (Edge-TTS)...")
-        tts = TTSEngine(voice=DEFAULT_VOICE, rate="+8%")
+        lang = self.data.get("lang", "ru").lower()
+        default_voice = "en-US-ChristopherNeural" if lang == "en" else DEFAULT_VOICE
+        voice = self.data.get("voice", default_voice)
+        rate = self.data.get("voice_rate", "+8%")
+        print(f"\n[2/6] Синтез речи ({lang.upper()}, голос: {voice})...")
+        tts = TTSEngine(voice=voice, rate=rate)
         blocks_def = self.data.get("blocks", [])
 
         block_timings = {}
