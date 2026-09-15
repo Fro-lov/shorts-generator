@@ -461,3 +461,270 @@ if __name__ == "__main__":
     generate_scheme_5_hl2_prop_flying(renderer, out_dir_en / "scheme_5_hl2_prop_flying.png", lang="en")
 
     print("\n✨ Все схемы успешно созданы на RU и EN!")
+def generate_scheme_farcry5_overlap(renderer: PhysicsDiagramRenderer, out_path: Path, lang: str = "ru"):
+    """Episode 5 Scheme 1: Far Cry 5 Double Overlap."""
+    img, draw = renderer.create_canvas()
+    title_badge = "FAR CRY 5: DOUBLE COLLISION OVERLAP" if lang == "en" else "FAR CRY 5: ДВОЙНОЕ ЗАЩЕМЛЕНИЕ ТРУПА"
+    renderer.draw_badge(draw, 40, 25, title_badge, bg_color="#0f172a", text_color="#38bdf8", border_color="#38bdf8")
+
+    draw.line([(540, 80), (540, 470)], fill="#1e293b", width=2)
+    ground_y = 420
+
+    # ЛЕВАЯ КОЛОНКА (540px)
+    col1_title = "1. CORPSE CLAMPED IN VICE" if lang == "en" else "1. ЗАЩЕМЛЕНИЕ ТРУПА ВПРИТИРКУ"
+    draw.text((270, 85), col1_title, fill="#fb7185", font=renderer.font_bold, anchor="mm")
+
+    # Truck bed representation
+    truck_box_y1, truck_box_y2 = 140, 240
+    draw.rounded_rectangle([90, truck_box_y1, 450, truck_box_y2], radius=10, fill="#1e3a8a", outline="#60a5fa", width=2)
+    truck_lbl = "TRUCK COLLIDER (5 TONS)" if lang == "en" else "КУЗОВ ПИКАПА (5 ТОНН)"
+    draw.text((270, 190), truck_lbl, fill="#ffffff", font=renderer.font_bold, anchor="mm")
+
+    # Ground
+    draw.line([(60, ground_y), (480, ground_y)], fill="#64748b", width=3)
+    draw.text((120, ground_y + 20), "Terrain Ground" if lang == "en" else "Земля (Террейн)", fill="#94a3b8", font=renderer.font_regular, anchor="mm")
+
+    # Ragdoll capsule caught between
+    rag_cx, rag_cy = 270, 330
+    renderer.draw_capsule_collider(draw, rag_cx, rag_cy, radius=32, height=140, color="#ef4444", fill="#7f1d1d66")
+    corpse_lbl = "Ragdoll (Δx overlap)" if lang == "en" else "Рэгдолл (Пересечение Δx)"
+    draw.text((rag_cx, rag_cy), corpse_lbl, fill="#fca5a5", font=renderer.font_bold, anchor="mm")
+
+    renderer.draw_contact_point(draw, rag_cx, truck_box_y2, label="P1: Truck" if lang == "en" else "P1: Кузов", color="#ef4444", label_side="left")
+    renderer.draw_contact_point(draw, rag_cx, ground_y, label="P2: Ground" if lang == "en" else "P2: Земля", color="#ef4444", label_side="right")
+
+    # ПРАВАЯ КОЛОНКА (540px)
+    col2_title = "2. DUAL REPULSION SPIKE" if lang == "en" else "2. ДВОЙНОЙ ВЫТАЛКИВАЮЩИЙ ИМПУЛЬС"
+    draw.text((810, 85), col2_title, fill="#4ade80", font=renderer.font_bold, anchor="mm")
+
+    draw.line([(600, ground_y), (1020, ground_y)], fill="#64748b", width=3)
+    draw.text((680, ground_y + 20), "Terrain Ground" if lang == "en" else "Земля (Террейн)", fill="#94a3b8", font=renderer.font_regular, anchor="mm")
+
+    # Upward forces
+    f1_lbl = "F1: Ground Push" if lang == "en" else "F1: От земли"
+    renderer.draw_vector(draw, (750, ground_y - 10), (750, 260), color="#4ade80", width=5, label=f1_lbl, label_side="left")
+
+    f2_lbl = "F2: Truck Reaction" if lang == "en" else "F2: Реакция опоры"
+    renderer.draw_vector(draw, (870, ground_y - 10), (870, 260), color="#f59e0b", width=5, label=f2_lbl, label_side="right")
+
+    # Net launch force
+    f_net_lbl = "F_NET = F1 + F2 = MAX!" if lang == "en" else "F_ИТОГ = F1 + F2 (В КОСМОС!)"
+    renderer.draw_vector(draw, (810, 250), (810, 130), color="#38bdf8", width=7, label=f_net_lbl, label_side="right")
+
+    # Bottom banner
+    draw.rounded_rectangle([40, 505, 1040, 565], radius=12, fill="#111827", outline="#38bdf8", width=2)
+    bottom_lbl = "PHYSICS: Body wedged between two solids -> Solver sums upward repulsion forces" if lang == "en" else "ФИЗИКА: Труп зажат между двумя телами -> Движок суммирует силы выталкивания вверх"
+    draw.text((540, 535), bottom_lbl, fill="#bae6fd", font=renderer.font_mono_bold, anchor="mm")
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if out_path.exists():
+        out_path.unlink()
+    img.save(str(out_path), "PNG")
+    print(f"   ✓ Схема 1 Far Cry 5 ({lang}) сгенерирована: {out_path}")
+
+
+def generate_scheme_farcry5_launch(renderer: PhysicsDiagramRenderer, out_path: Path, lang: str = "ru"):
+    """Episode 5 Scheme 2: Far Cry 5 Launch to Orbit."""
+    img, draw = renderer.create_canvas()
+    title_badge = "FAR CRY 5: SPACE PROGRAM CATAPULT" if lang == "en" else "FAR CRY 5: КОСМИЧЕСКАЯ ПРОГРАММА СЕКТАНТОВ"
+    renderer.draw_badge(draw, 40, 25, title_badge, bg_color="#0f172a", text_color="#a855f7", border_color="#c084fc")
+
+    draw.line([(540, 80), (540, 470)], fill="#1e293b", width=2)
+    ground_y = 400
+
+    # ЛЕВАЯ КОЛОНКА (540px)
+    col1_title = "1. MASSIVE IMPULSE TO TRUCK" if lang == "en" else "1. ИМПУЛЬС ВЫБИВАЕТ ПИКАП"
+    draw.text((270, 85), col1_title, fill="#fb7185", font=renderer.font_bold, anchor="mm")
+    draw.line([(60, ground_y), (480, ground_y)], fill="#64748b", width=3)
+
+    t1_x = 270
+    renderer.draw_2d_car(draw, t1_x, ground_y - 40, scale=1.1, color="#1e3a8a", outline="#60a5fa")
+    
+    imp_lbl = "Impulse J = F × dt" if lang == "en" else "Импульс J = F × dt"
+    renderer.draw_vector(draw, (t1_x, ground_y - 10), (t1_x, ground_y - 130), color="#ef4444", width=6, label=imp_lbl, label_side="right")
+    draw.text((t1_x, ground_y + 25), "Flatbed Truck (5,000 kg)" if lang == "en" else "Эвакуатор (5,000 кг)", fill="#94a3b8", font=renderer.font_regular, anchor="mm")
+
+    # ПРАВАЯ КОЛОНКА (540px)
+    col2_title = "2. STRATOSPHERE ORBIT FLIGHT" if lang == "en" else "2. ПОЛЕТ В СТРАТОСФЕРУ"
+    draw.text((810, 85), col2_title, fill="#4ade80", font=renderer.font_bold, anchor="mm")
+    draw.line([(600, ground_y), (1020, ground_y)], fill="#64748b", width=3)
+    draw.text((680, ground_y + 25), "Ground Terrain" if lang == "en" else "Земля округа Хоуп", fill="#94a3b8", font=renderer.font_regular, anchor="mm")
+
+    # Flying truck
+    fly_x, fly_y = 820, 200
+    renderer.draw_2d_car(draw, fly_x, fly_y, scale=0.9, color="#1e3a8a", outline="#60a5fa")
+
+    v_lbl = "Velocity 450 km/h" if lang == "en" else "Скорость 450 км/ч"
+    renderer.draw_vector(draw, (730, ground_y - 20), (fly_x - 30, fly_y + 20), color="#22c55e", width=6, label=v_lbl, label_side="left")
+
+    space_lbl = "Hope County Spaceflight!" if lang == "en" else "Выход на околоземную орбиту!"
+    draw.text((fly_x, fly_y - 45), space_lbl, fill="#4ade80", font=renderer.font_bold, anchor="mm")
+
+    # Bottom banner
+    draw.rounded_rectangle([40, 505, 1040, 565], radius=12, fill="#111827", outline="#8b5cf6", width=2)
+    bottom_lbl = "RESULT: Unresolved collision overlap accelerates the 5-ton truck into orbit" if lang == "en" else "ИТОГ: Неустранимое пересечение коллизий запускает 5-тонный пикап на орбиту"
+    draw.text((540, 535), bottom_lbl, fill="#ddd6fe", font=renderer.font_mono_bold, anchor="mm")
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if out_path.exists():
+        out_path.unlink()
+    img.save(str(out_path), "PNG")
+    print(f"   ✓ Схема 2 Far Cry 5 ({lang}) сгенерирована: {out_path}")
+def generate_scheme_farcry5_overlap(renderer: PhysicsDiagramRenderer, out_path: Path, lang: str = "ru"):
+    """Episode 5 Scheme 1: Far Cry 5 Double Overlap with Zero-Overlap standard."""
+    img, draw = renderer.create_canvas()
+    title_badge = "FAR CRY 5: DOUBLE COLLISION OVERLAP" if lang == "en" else "FAR CRY 5: ДВОЙНОЕ ЗАЩЕМЛЕНИЕ ТРУПА"
+    renderer.draw_badge(draw, 40, 25, title_badge, bg_color="#0f172a", text_color="#38bdf8", border_color="#38bdf8")
+
+    draw.line([(540, 80), (540, 470)], fill="#1e293b", width=2)
+    ground_y = 420
+
+    # ЛЕВАЯ КОЛОНКА (540px)
+    col1_title = "1. CORPSE CLAMPED IN VICE" if lang == "en" else "1. ЗАЩЕМЛЕНИЕ ТРУПА ВПРИТИРКУ"
+    draw.text((270, 85), col1_title, fill="#fb7185", font=renderer.font_bold, anchor="mm")
+
+    # Truck bed representation
+    truck_box_y1, truck_box_y2 = 135, 230
+    draw.rounded_rectangle([70, truck_box_y1, 470, truck_box_y2], radius=10, fill="#1e3a8a", outline="#60a5fa", width=2)
+    truck_lbl = "TRUCK COLLIDER (5 TONS)" if lang == "en" else "КУЗОВ ПИКАПА (5 ТОНН)"
+    draw.text((270, 180), truck_lbl, fill="#ffffff", font=renderer.font_bold, anchor="mm")
+
+    # Ground
+    draw.line([(60, ground_y), (480, ground_y)], fill="#64748b", width=3)
+    draw.text((120, ground_y + 20), "Terrain Ground" if lang == "en" else "Земля (Террейн)", fill="#94a3b8", font=renderer.font_regular, anchor="mm")
+
+    # Ragdoll capsule caught between
+    rag_cx, rag_cy = 270, 325
+    renderer.draw_capsule_collider(draw, rag_cx, rag_cy, radius=32, height=140, color="#ef4444", fill="#7f1d1d66")
+    corpse_lbl = "Ragdoll (Δx)" if lang == "en" else "Рэгдолл (Δx)"
+    draw.text((rag_cx, rag_cy), corpse_lbl, fill="#fca5a5", font=renderer.font_bold, anchor="mm")
+
+    renderer.draw_contact_point(draw, rag_cx, truck_box_y2, label="P1: Truck" if lang == "en" else "P1: Кузов", color="#ef4444", label_side="left")
+    renderer.draw_contact_point(draw, rag_cx, ground_y, label="P2: Ground" if lang == "en" else "P2: Земля", color="#ef4444", label_side="right")
+
+    # ПРАВАЯ КОЛОНКА (540px)
+    col2_title = "2. DUAL REPULSION SPIKE" if lang == "en" else "2. ДВОЙНОЙ ВЫТАЛКИВАЮЩИЙ ИМПУЛЬС"
+    draw.text((810, 85), col2_title, fill="#4ade80", font=renderer.font_bold, anchor="mm")
+
+    draw.line([(600, ground_y), (1020, ground_y)], fill="#64748b", width=3)
+    draw.text((680, ground_y + 20), "Terrain Ground" if lang == "en" else "Земля (Террейн)", fill="#94a3b8", font=renderer.font_regular, anchor="mm")
+
+    # Upward forces
+    f1_lbl = "F1: Ground Push" if lang == "en" else "F1: От земли"
+    renderer.draw_vector(draw, (730, ground_y - 10), (730, 260), color="#4ade80", width=5, label=f1_lbl, label_side="left")
+
+    f2_lbl = "F2: Truck Reaction" if lang == "en" else "F2: Реакция опоры"
+    renderer.draw_vector(draw, (890, ground_y - 10), (890, 260), color="#f59e0b", width=5, label=f2_lbl, label_side="right")
+
+    # Net launch force
+    f_net_lbl = "F_NET = F1 + F2 = MAX!" if lang == "en" else "F_ИТОГ = F1 + F2 (В КОСМОС!)"
+    renderer.draw_vector(draw, (810, 250), (810, 130), color="#38bdf8", width=7, label=f_net_lbl, label_side="right")
+
+    # Bottom banner
+    draw.rounded_rectangle([40, 505, 1040, 565], radius=12, fill="#111827", outline="#38bdf8", width=2)
+    bottom_lbl = "PHYSICS: Body wedged between two solids -> Solver sums upward repulsion forces" if lang == "en" else "ФИЗИКА: Труп зажат между двумя телами -> Движок суммирует силы выталкивания вверх"
+    draw.text((540, 535), bottom_lbl, fill="#bae6fd", font=renderer.font_mono_bold, anchor="mm")
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if out_path.exists():
+        out_path.unlink()
+    img.save(str(out_path), "PNG")
+    print(f"   ✓ Схема 1 Far Cry 5 ({lang}) сгенерирована: {out_path}")
+
+
+def generate_scheme_farcry5_launch(renderer: PhysicsDiagramRenderer, out_path: Path, lang: str = "ru"):
+    """Episode 5 Scheme 2: Far Cry 5 Launch to Orbit with Zero-Overlap standard."""
+    img, draw = renderer.create_canvas()
+    title_badge = "FAR CRY 5: SPACE PROGRAM CATAPULT" if lang == "en" else "FAR CRY 5: КОСМИЧЕСКАЯ ПРОГРАММА СЕКТАНТОВ"
+    renderer.draw_badge(draw, 40, 25, title_badge, bg_color="#0f172a", text_color="#a855f7", border_color="#c084fc")
+
+    draw.line([(540, 80), (540, 470)], fill="#1e293b", width=2)
+    ground_y = 400
+
+    # ЛЕВАЯ КОЛОНКА (540px)
+    col1_title = "1. MASSIVE IMPULSE TO TRUCK" if lang == "en" else "1. ИМПУЛЬС ВЫБИВАЕТ ПИКАП"
+    draw.text((270, 85), col1_title, fill="#fb7185", font=renderer.font_bold, anchor="mm")
+    draw.line([(60, ground_y), (480, ground_y)], fill="#64748b", width=3)
+
+    t1_x = 270
+    renderer.draw_2d_car(draw, t1_x, ground_y - 40, scale=1.1, color="#1e3a8a", outline="#60a5fa")
+    
+    imp_lbl = "Impulse J = F × dt" if lang == "en" else "Импульс J = F × dt"
+    renderer.draw_vector(draw, (t1_x, ground_y - 10), (t1_x, ground_y - 135), color="#ef4444", width=6, label=imp_lbl, label_side="right")
+    draw.text((t1_x, ground_y + 25), "Flatbed Truck (5,000 kg)" if lang == "en" else "Эвакуатор (5,000 кг)", fill="#94a3b8", font=renderer.font_regular, anchor="mm")
+
+    # ПРАВАЯ КОЛОНКА (540px)
+    col2_title = "2. STRATOSPHERE ORBIT FLIGHT" if lang == "en" else "2. ПОЛЕТ В СТРАТОСФЕРУ"
+    draw.text((810, 85), col2_title, fill="#4ade80", font=renderer.font_bold, anchor="mm")
+    draw.line([(600, ground_y), (1020, ground_y)], fill="#64748b", width=3)
+    draw.text((680, ground_y + 25), "Ground Terrain" if lang == "en" else "Земля округа Хоуп", fill="#94a3b8", font=renderer.font_regular, anchor="mm")
+
+    # Flying truck
+    fly_x, fly_y = 860, 180
+    renderer.draw_2d_car(draw, fly_x, fly_y, scale=0.9, color="#1e3a8a", outline="#60a5fa")
+
+    v_lbl = "Velocity 450 km/h" if lang == "en" else "Скорость 450 км/ч"
+    renderer.draw_vector(draw, (690, ground_y - 15), (fly_x - 45, fly_y + 35), color="#22c55e", width=6, label=v_lbl, label_side="left")
+
+    space_lbl = "Hope County Spaceflight!" if lang == "en" else "Выход на околоземную орбиту!"
+    draw.text((fly_x, fly_y - 45), space_lbl, fill="#4ade80", font=renderer.font_bold, anchor="mm")
+
+    # Bottom banner
+    draw.rounded_rectangle([40, 505, 1040, 565], radius=12, fill="#111827", outline="#8b5cf6", width=2)
+    bottom_lbl = "RESULT: Unresolved collision overlap accelerates the 5-ton truck into orbit" if lang == "en" else "ИТОГ: Неустранимое пересечение коллизий запускает 5-тонный пикап на орбиту"
+    draw.text((540, 535), bottom_lbl, fill="#ddd6fe", font=renderer.font_mono_bold, anchor="mm")
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if out_path.exists():
+        out_path.unlink()
+    img.save(str(out_path), "PNG")
+    print(f"   ✓ Схема 2 Far Cry 5 ({lang}) сгенерирована: {out_path}")
+def generate_scheme_farcry5_launch(renderer: PhysicsDiagramRenderer, out_path: Path, lang: str = "ru"):
+    """Episode 5 Scheme 2: Far Cry 5 Launch to Orbit with Zero-Overlap standard."""
+    img, draw = renderer.create_canvas()
+    title_badge = "FAR CRY 5: SPACE PROGRAM CATAPULT" if lang == "en" else "FAR CRY 5: КОСМИЧЕСКАЯ ПРОГРАММА СЕКТАНТОВ"
+    renderer.draw_badge(draw, 40, 25, title_badge, bg_color="#0f172a", text_color="#a855f7", border_color="#c084fc")
+
+    draw.line([(540, 80), (540, 470)], fill="#1e293b", width=2)
+    ground_y = 400
+
+    # ЛЕВАЯ КОЛОНКА (540px)
+    col1_title = "1. MASSIVE IMPULSE TO TRUCK" if lang == "en" else "1. ИМПУЛЬС ВЫБИВАЕТ ПИКАП"
+    draw.text((270, 85), col1_title, fill="#fb7185", font=renderer.font_bold, anchor="mm")
+    draw.line([(60, ground_y), (480, ground_y)], fill="#64748b", width=3)
+
+    t1_x = 270
+    renderer.draw_2d_car(draw, t1_x, ground_y - 40, scale=1.1, color="#1e3a8a", outline="#60a5fa")
+    
+    imp_lbl = "Impulse J = F × dt" if lang == "en" else "Импульс J = F × dt"
+    renderer.draw_vector(draw, (t1_x, ground_y - 10), (t1_x, ground_y - 135), color="#ef4444", width=6, label=imp_lbl, label_side="right")
+    draw.text((t1_x, ground_y + 25), "Flatbed Truck (5,000 kg)" if lang == "en" else "Эвакуатор (5,000 кг)", fill="#94a3b8", font=renderer.font_regular, anchor="mm")
+
+    # ПРАВАЯ КОЛОНКА (540px)
+    col2_title = "2. STRATOSPHERE ORBIT FLIGHT" if lang == "en" else "2. ПОЛЕТ В СТРАТОСФЕРУ"
+    draw.text((810, 85), col2_title, fill="#4ade80", font=renderer.font_bold, anchor="mm")
+    draw.line([(600, ground_y), (1020, ground_y)], fill="#64748b", width=3)
+    draw.text((680, ground_y + 25), "Ground Terrain" if lang == "en" else "Земля округа Хоуп", fill="#94a3b8", font=renderer.font_regular, anchor="mm")
+
+    # Flying truck
+    fly_x, fly_y = 880, 175
+    renderer.draw_2d_car(draw, fly_x, fly_y, scale=0.9, color="#1e3a8a", outline="#60a5fa")
+
+    # Velocity vector with manual label on the side
+    renderer.draw_vector(draw, (730, ground_y - 15), (fly_x - 45, fly_y + 35), color="#22c55e", width=6)
+    v_lbl = "Velocity\n450 km/h" if lang == "en" else "Скорость\n450 км/ч"
+    draw.text((680, 260), v_lbl, fill="#4ade80", font=renderer.font_bold, anchor="mm", align="center")
+
+    space_lbl = "Hope County Spaceflight!" if lang == "en" else "Выход на околоземную орбиту!"
+    draw.text((fly_x, fly_y - 45), space_lbl, fill="#4ade80", font=renderer.font_bold, anchor="mm")
+
+    # Bottom banner
+    draw.rounded_rectangle([40, 505, 1040, 565], radius=12, fill="#111827", outline="#8b5cf6", width=2)
+    bottom_lbl = "RESULT: Unresolved collision overlap accelerates the 5-ton truck into orbit" if lang == "en" else "ИТОГ: Неустранимое пересечение коллизий запускает 5-тонный пикап на орбиту"
+    draw.text((540, 535), bottom_lbl, fill="#ddd6fe", font=renderer.font_mono_bold, anchor="mm")
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if out_path.exists():
+        out_path.unlink()
+    img.save(str(out_path), "PNG")
+    print(f"   ✓ Схема 2 Far Cry 5 ({lang}) сгенерирована: {out_path}")

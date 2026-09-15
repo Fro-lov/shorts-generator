@@ -46,7 +46,7 @@ SUBTITLE_PRIMARY_COLOR = "&H00FFFFFF"     # White (BGR in ASS: &H00BBGGRR)
 SUBTITLE_HIGHLIGHT_COLOR = "&H0000FFFF"   # Bright Yellow (&H0000FFFF in ASS is yellow B:00 G:FF R:FF)
 SUBTITLE_OUTLINE_COLOR = "&H00000000"     # Black border
 SUBTITLE_OUTLINE_WIDTH = 4
-SUBTITLE_MARGIN_V = 280                   # Distance from bottom (placed comfortably above TikTok UI)
+SUBTITLE_MARGIN_V = 420                   # Placed comfortably above YouTube Subscribe button and Shorts UI
 
 # Code Card Overlay styling
 CODE_CARD_WIDTH = 960

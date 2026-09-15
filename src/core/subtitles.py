@@ -23,7 +23,7 @@ class SubtitleGenerator:
         outline_color: str = "&H00000000",   # Black border
         outline_width: int = 5,
         shadow_width: int = 2,
-        margin_v: int = 340                  # Placed right above typical TikTok caption area
+        margin_v: int = 420                  # Placed comfortably above YouTube Subscribe button and Shorts UI
     ):
         self.font_name = font_name
         self.font_size = font_size
