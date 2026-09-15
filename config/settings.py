@@ -29,6 +29,12 @@ VIDEO_WIDTH = 1080
 VIDEO_HEIGHT = 1920
 FPS = 30
 
+# Hardware Acceleration / Encoder Settings
+# NVIDIA RTX NVENC GPU encoder offloads work from CPU and renders ~10x faster
+VIDEO_CODEC = "h264_nvenc"
+VIDEO_PRESET = "p4"
+VIDEO_CQ = "20"
+
 # TTS Defaults
 DEFAULT_VOICE = "ru-RU-DmitryNeural"  # High quality natural Russian voice
 # Alternative voices: "ru-RU-SvetlanaNeural"
@@ -45,3 +51,4 @@ SUBTITLE_MARGIN_V = 280                   # Distance from bottom (placed comfort
 # Code Card Overlay styling
 CODE_CARD_WIDTH = 960
 CODE_CARD_FONT = "consola.ttf"
+
