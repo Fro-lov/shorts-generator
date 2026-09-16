@@ -46,9 +46,17 @@ SUBTITLE_PRIMARY_COLOR = "&H00FFFFFF"     # White (BGR in ASS: &H00BBGGRR)
 SUBTITLE_HIGHLIGHT_COLOR = "&H0000FFFF"   # Bright Yellow (&H0000FFFF in ASS is yellow B:00 G:FF R:FF)
 SUBTITLE_OUTLINE_COLOR = "&H00000000"     # Black border
 SUBTITLE_OUTLINE_WIDTH = 4
-SUBTITLE_MARGIN_V = 420                   # Placed comfortably above YouTube Subscribe button and Shorts UI
+SUBTITLE_MARGIN_V = 420                   # Placed comfortably above YouTube Subscribe button (Y=1480-1500)
 
-# Code Card Overlay styling
-CODE_CARD_WIDTH = 960
-CODE_CARD_FONT = "consola.ttf"
+# Layout Zones (Strict Zero-Overlap Vertical Grid for 1080x1920)
+ZONE_GAMEPLAY_Y = 200                     # Top gameplay block: Y=200 to Y=774
+ZONE_GAMEPLAY_WIDTH = 1020
+ZONE_GAMEPLAY_HEIGHT = 574
+
+ZONE_VISUAL_Y = 860                       # Motion UI / Memes / Diagrams zone: Y=860 to Y=1400
+ZONE_VISUAL_MAX_WIDTH = 960
+ZONE_VISUAL_MAX_HEIGHT = 540
+
+ZONE_SUBTITLES_Y = 1480                   # Subtitles zone: Y=1480 to Y=1540 (MarginV=420)
+ZONE_BOTTOM_SAFE_GAP = 380                # Safe margin for YouTube Subscribe button and Shorts UI
 
