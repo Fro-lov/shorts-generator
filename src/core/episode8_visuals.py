@@ -337,6 +337,273 @@ class Episode8VisualsGenerator:
         """
         return self.render_html_to_image(html, output_path)
 
+    def render_card1_detach_en(self, output_path: Path) -> Path:
+        """
+        Card 1: Socket Detach & Collider Overlap (English).
+        """
+        html = f"""
+        <div style="
+            width: {self.width}px;
+            height: {self.height}px;
+            background: #14161a;
+            border-radius: 24px;
+            padding: 32px 38px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #ffffff;
+        ">
+            <!-- Header -->
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <div style="font-size: 34px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">
+                    SOCKET HIERARCHY DETACH
+                </div>
+                <div style="font-size: 20px; font-weight: 800; color: #71717a; font-family: monospace;">
+                    PART 1/2
+                </div>
+            </div>
+
+            <!-- 2 Large Block Rows -->
+            <div style="display: flex; flex-direction: column; gap: 16px; margin: 8px 0;">
+                
+                <!-- Block 1 -->
+                <div style="
+                    background: #1e2126;
+                    border-left: 6px solid #f87171;
+                    border-radius: 14px;
+                    padding: 18px 24px;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <div style="font-size: 26px; font-weight: 900; color: #f87171;">
+                            1. Crossbar Collision (Head Overlap)
+                        </div>
+                        <div style="font-family: monospace; font-size: 18px; color: #fca5a5; font-weight: 700;">
+                            Static Mesh Hit
+                        </div>
+                    </div>
+                    <div style="font-size: 21px; color: #e2e8f0; font-weight: 600; line-height: 1.35;">
+                        Samurai capsule hits the gate beam. Engine lacks an overhead dismount or ragdoll trigger.
+                    </div>
+                </div>
+
+                <!-- Block 2 -->
+                <div style="
+                    background: #1e2126;
+                    border-left: 6px solid #38bdf8;
+                    border-radius: 14px;
+                    padding: 18px 24px;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <div style="font-size: 26px; font-weight: 900; color: #38bdf8;">
+                            2. Saddle Socket Break (Socket Detach)
+                        </div>
+                        <div style="font-family: monospace; font-size: 18px; color: #94a3b8; font-weight: 700;">
+                            Transform Freeze
+                        </div>
+                    </div>
+                    <div style="font-size: 21px; color: #e2e8f0; font-weight: 600; line-height: 1.35;">
+                        Rider coordinates lock in mid-air while the horse keeps galloping forward by momentum.
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Minimal Footer Note -->
+            <div style="
+                background: #1e2126;
+                border-radius: 12px;
+                padding: 10px 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                font-size: 19px;
+                color: #a1a1aa;
+                font-weight: 700;
+            ">
+                <span>Character pinned by collider</span>
+                <span style="color: #f87171; font-family: monospace; font-weight: 800;">AttachToSocket = FAILED</span>
+            </div>
+        </div>
+        """
+        return self.render_html_to_image(html, output_path)
+
+    def render_card2_camera_en(self, output_path: Path) -> Path:
+        """
+        Card 2: Blind Follow Camera & Mount Autonomy (English).
+        """
+        html = f"""
+        <div style="
+            width: {self.width}px;
+            height: {self.height}px;
+            background: #14161a;
+            border-radius: 24px;
+            padding: 32px 38px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #ffffff;
+        ">
+            <!-- Header -->
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <div style="font-size: 34px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">
+                    BLIND FOLLOW CAMERA
+                </div>
+                <div style="font-size: 20px; font-weight: 800; color: #71717a; font-family: monospace;">
+                    PART 2/2
+                </div>
+            </div>
+
+            <!-- Large Content Blocks -->
+            <div style="display: flex; flex-direction: column; gap: 16px; margin: 8px 0;">
+                
+                <!-- Block 1 -->
+                <div style="
+                    background: #1e2126;
+                    border-left: 6px solid #f59e0b;
+                    border-radius: 14px;
+                    padding: 18px 24px;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <div style="font-size: 26px; font-weight: 900; color: #f59e0b;">
+                            3. Camera Target: Horse (Mount Root)
+                        </div>
+                        <div style="font-family: monospace; font-size: 18px; color: #fde68a; font-weight: 700;">
+                            CameraRig Target
+                        </div>
+                    </div>
+                    <div style="font-size: 21px; color: #e2e8f0; font-weight: 600; line-height: 1.35;">
+                        Camera tracks vehicle entity, not the rider. It never detects the missing samurai.
+                    </div>
+                </div>
+
+                <!-- Summary Big Card -->
+                <div style="
+                    background: #272a30;
+                    border: 2px solid #3f3f46;
+                    border-radius: 14px;
+                    padding: 18px 24px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                ">
+                    <div>
+                        <div style="font-size: 24px; font-weight: 900; color: #ffffff;">
+                            Horse ignores missing rider
+                        </div>
+                        <div style="font-size: 18px; color: #a1a1aa; font-weight: 600; margin-top: 2px;">
+                            Mount controller autonomously finishes crossing the suspension bridge.
+                        </div>
+                    </div>
+                    <div style="background: #18181b; border: 1.5px solid #22c55e; padding: 8px 16px; border-radius: 10px; font-size: 19px; font-family: monospace; font-weight: 900; color: #4ade80; white-space: nowrap;">
+                        Horse Autonomous
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Badge -->
+            <div style="
+                background: #1e2126;
+                border-radius: 12px;
+                padding: 10px 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                font-size: 19px;
+                font-weight: 800;
+            ">
+                <span style="color: #ffffff;">RESULT: Camera crew left with horse, abandoning the samurai</span>
+                <span style="color: #38bdf8; font-family: monospace;">Target = HorseActor</span>
+            </div>
+        </div>
+        """
+        return self.render_html_to_image(html, output_path)
+
+    def render_card3_fix_en(self, output_path: Path) -> Path:
+        """
+        Card 3: Code Card Fix (English).
+        """
+        html = f"""
+        <div style="
+            width: {self.width}px;
+            height: {self.height}px;
+            background: #14161a;
+            border-radius: 24px;
+            padding: 28px 36px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #ffffff;
+        ">
+            <!-- Header -->
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <div style="font-size: 32px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">
+                    GAME ENGINE CODE FIX
+                </div>
+                <div style="font-size: 18px; font-weight: 800; color: #22c55e; font-family: monospace;">
+                    BUG FIX
+                </div>
+            </div>
+
+            <!-- Code Comparison -->
+            <div style="display: flex; flex-direction: column; gap: 14px; margin: 4px 0;">
+                
+                <!-- Wrong Code -->
+                <div style="
+                    background: #1c1517;
+                    border-left: 6px solid #ef4444;
+                    border-radius: 12px;
+                    padding: 14px 20px;
+                    font-family: monospace;
+                ">
+                    <div style="font-size: 18px; font-weight: 900; color: #f87171; margin-bottom: 6px;">
+                        [-] BUG: Horse moves without verifying rider
+                    </div>
+                    <div style="font-size: 20px; color: #fca5a5; font-weight: 700;">
+                        Horse.MoveForward(); // Camera and horse ride off into sunset
+                    </div>
+                </div>
+
+                <!-- Fixed Code -->
+                <div style="
+                    background: #132219;
+                    border-left: 6px solid #22c55e;
+                    border-radius: 12px;
+                    padding: 14px 20px;
+                    font-family: monospace;
+                ">
+                    <div style="font-size: 18px; font-weight: 900; color: #4ade80; margin-bottom: 6px;">
+                        [+] FIXED: Check socket & trigger ragdoll drop
+                    </div>
+                    <div style="font-size: 20px; color: #86efac; font-weight: 700; line-height: 1.4;">
+                        if (!Rider.IsAttached()) &#123;<br>
+                        &nbsp;&nbsp;Horse.Stop();<br>
+                        &nbsp;&nbsp;Rider.EnableRagdoll(); // Samurai drops safely to ground<br>
+                        &#125;
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Badge -->
+            <div style="
+                background: #1e2126;
+                border-radius: 12px;
+                padding: 8px 18px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                font-size: 18px;
+                color: #a1a1aa;
+                font-weight: 700;
+            ">
+                <span>Safe ragdoll dismount on obstacle collision</span>
+                <span style="color: #22c55e; font-family: monospace;">Pass Collision Check</span>
+            </div>
+        </div>
+        """
+        return self.render_html_to_image(html, output_path)
+
 
 if __name__ == "__main__":
     from config.settings import OUTPUT_DIR
