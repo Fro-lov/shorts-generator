@@ -53,10 +53,17 @@ ZONE_GAMEPLAY_Y = 200                     # Top gameplay block: Y=200 to Y=774
 ZONE_GAMEPLAY_WIDTH = 1020
 ZONE_GAMEPLAY_HEIGHT = 574
 
-ZONE_VISUAL_Y = 860                       # Motion UI / Memes / Diagrams zone: Y=860 to Y=1400
+# Full-Height Diagram Cards (Top 2/3 during explanation scenes): Y=80 to Y=1360
+ZONE_DIAGRAM_TOP_Y = 80
+ZONE_DIAGRAM_WIDTH = 1000
+ZONE_DIAGRAM_HEIGHT = 1280
+
+# Motion UI / Memes overlay zone during gameplay: Y=860 to Y=1400
+ZONE_VISUAL_Y = 860
 ZONE_VISUAL_MAX_WIDTH = 960
 ZONE_VISUAL_MAX_HEIGHT = 540
 
 ZONE_SUBTITLES_Y = 1480                   # Subtitles zone: Y=1480 to Y=1540 (MarginV=420)
 ZONE_BOTTOM_SAFE_GAP = 380                # Safe margin for YouTube Subscribe button and Shorts UI
+
 
