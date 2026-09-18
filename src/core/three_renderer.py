@@ -239,24 +239,31 @@ function renderCompositeCard(t, progress) {{
     ctx.restore();
 
     // 5. Draw HUD Box inside Canvas
-    drawRoundedRect(ctx, canvasX + 24, canvasY + 24, 460, 130, 14, 'rgba(15, 23, 42, 0.92)', '#38bdf8', 1.5);
+    const hudW = window._hudBoxWidth || 480;
+    drawRoundedRect(ctx, canvasX + 24, canvasY + 24, hudW, 130, 14, 'rgba(15, 23, 42, 0.92)', '#38bdf8', 1.5);
     ctx.font = 'bold 21px monospace';
     
-    // Line 1: Velocity
+    // Line 1
+    const l1Label = window._hudLine1Label || 'VELOCITY: ';
     ctx.fillStyle = '#38bdf8';
-    ctx.fillText('VELOCITY: ', canvasX + 44, canvasY + 60);
+    ctx.fillText(l1Label, canvasX + 44, canvasY + 60);
     ctx.fillStyle = window._hudVelColor || '#4ade80';
-    ctx.fillText(window._hudVelText || '--', canvasX + 175, canvasY + 60);
+    ctx.fillText(window._hudVelText || '--', canvasX + 44 + ctx.measureText(l1Label).width + 8, canvasY + 60);
 
-    // Line 2: Solver
+    // Line 2
+    const l2Label = window._hudLine2Label || 'SOLVER:   ';
     ctx.fillStyle = '#38bdf8';
-    ctx.fillText('SOLVER:   DISCRETE (1 TIK)', canvasX + 44, canvasY + 95);
+    ctx.fillText(l2Label, canvasX + 44, canvasY + 95);
+    ctx.fillStyle = window._hudLine2Color || '#38bdf8';
+    ctx.fillText(window._hudLine2Text || 'DISCRETE (1 TIK)', canvasX + 44 + ctx.measureText(l2Label).width + 8, canvasY + 95);
 
-    // Line 3: Status
+    // Line 3
+    const l3Label = window._hudLine3Label || 'STATUS:   ';
     ctx.fillStyle = '#38bdf8';
-    ctx.fillText('STATUS:   ', canvasX + 44, canvasY + 130);
+    ctx.fillText(l3Label, canvasX + 44, canvasY + 130);
     ctx.fillStyle = window._hudStatusColor || '#4ade80';
-    ctx.fillText(window._hudStatusText || 'NORMAL', canvasX + 175, canvasY + 130);
+    ctx.fillText(window._hudStatusText || 'NORMAL', canvasX + 44 + ctx.measureText(l3Label).width + 8, canvasY + 130);
+
 
     // 6. Draw Footer
     const footerY = TOTAL_H - 145;
