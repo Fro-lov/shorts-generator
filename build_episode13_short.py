@@ -36,16 +36,15 @@ def get_audio_duration(file_path: Path) -> float:
 
 def prepare_gameplay_background(gameplay_mp4: Path, total_duration: float, output_bg: Path, temp_dir: Path) -> Path:
     """
-    Creates a full 9:16 background from gameplay clip cut at 5.0 seconds (before death screen):
-    - Cut first 5.0 seconds
+    Creates a full 9:16 background from gameplay clip cut at 6.0 seconds (extended by 1s to clearly show second resurrection):
+    - Cut first 6.0 seconds
     - Crop top and bottom by 15% (crop=576:716:0:154)
     - Scale & place in gameplay window (y=200..774, width 1020, height 574)
     - Loops continuously throughout total video duration.
     """
-    base_seg = temp_dir / "base_seg_5s.mp4"
+    base_seg = temp_dir / "base_seg_6s.mp4"
     
-    # 15% top & bottom crop from 576x1024:
-    # 1024 * 0.15 = 153.6 (crop y=154, height=716)
+    # 15% top & bottom crop from 576x1024 (crop y=154, height=716):
     filter_complex = (
         f"[0:v]crop=576:716:0:154[cropped];"
         f"[cropped]split=2[bg][fg];"
@@ -56,7 +55,7 @@ def prepare_gameplay_background(gameplay_mp4: Path, total_duration: float, outpu
     cmd_base = [
         FFMPEG_PATH, "-y",
         "-ss", "00:00:00",
-        "-t", "5.0",
+        "-t", "6.0",
         "-i", str(gameplay_mp4),
         "-filter_complex", filter_complex,
         "-map", "[v_comp]",
@@ -87,7 +86,7 @@ def prepare_gameplay_background(gameplay_mp4: Path, total_duration: float, outpu
 
 def build_episode_13():
     print("=" * 60)
-    print("🚀 НАЧАЛО СБОРКИ ВЫПУСКА №13 (CS2: Sub-Tick & Prediction Rollback)")
+    print("🚀 НАЧАЛО СБОРКИ ВЫПУСКА №13 (CS2: Sub-Tick Timeline & Prediction Rollback)")
     print("=" * 60)
 
     # 1. Setup Output Structure
@@ -174,7 +173,6 @@ def build_episode_13():
             "audio": b_audio
         }
 
-        # Format subtitles display text for Onter's inn
         for ev in events:
             txt = ev["text"]
             if "Онтерс инн" in txt:
@@ -219,14 +217,14 @@ def build_episode_13():
     )
     sub_gen.generate_ass_file(all_subtitle_events, ass_path, max_words_per_line=3)
 
-    # 4. Generate Visuals (2D Diagrams)
-    print("\n[4/7] Генерация визуальных карточек (Top 2/3 Diagram Coverage)...")
+    # 4. Generate Visuals (2D Timeline & Diagrams)
+    print("\n[4/7] Генерация визуальных карточек (Sub-Tick Timeline Diagram)...")
     vis_gen = Episode13VisualsGenerator(width=1000, height=1280)
-    vis_gen.render_card1_client_prediction(card1_path)
+    vis_gen.render_card1_subtick_timeline(card1_path)
     vis_gen.render_card2_server_rollback(card2_path)
 
-    # 5. Background Video with 5s loop cut
-    print("\n[5/7] Подготовка фона с геймплеем (без экрана смерти, crop 15% top/bottom)...")
+    # 5. Background Video with 6.0s loop cut (extended by 1s)
+    print("\n[5/7] Подготовка фона с геймплеем (6.0s с 2-мя воскрешениями, crop 15% top/bottom)...")
     prepare_gameplay_background(
         gameplay_mp4=gameplay_src,
         total_duration=total_duration,
@@ -240,7 +238,6 @@ def build_episode_13():
     hk_start = block_timings["hook"]["start"]
     hk_dur = block_timings["hook"]["duration"]
 
-    # Divide hook into 2 halves for surrender.jpg and ricoshet.webp
     m1_start = hk_start
     m1_end = hk_start + (hk_dur / 2.0)
     m2_start = m1_end
@@ -254,16 +251,6 @@ def build_episode_13():
 
     rel_sub_path = Path(ass_path).resolve().as_posix().replace(":", "\\:")
     voice_delay_ms = int(INITIAL_GAMEPLAY_BUFFER * 1000)
-
-    # Inputs:
-    # 0: temp_bg (video)
-    # 1: voice_final (audio)
-    # 2: meme_surrender (image)
-    # 3: meme_ricoshet (image)
-    # 4: card1_path (image)
-    # 5: card2_path (image)
-    # 6: ambient_music (audio)
-    # 7: gameplay_src (audio original)
 
     inputs = [
         FFMPEG_PATH, "-y",
@@ -279,7 +266,6 @@ def build_episode_13():
     if has_bgm:
         inputs.extend(["-i", str(ambient_music)])
 
-    # Add gameplay audio input
     inputs.extend(["-i", str(gameplay_src)])
     gameplay_audio_idx = 6 if not has_bgm else 7
 
@@ -292,7 +278,7 @@ def build_episode_13():
         f"[3:v]scale=-1:520,format=rgba,fade=t=in:st={m2_start:.2f}:d=0.15:alpha=1,fade=t=out:st={m2_end-0.15:.2f}:d=0.15:alpha=1[m2]",
         f"[v0][m2]overlay=(W-w)/2:860:enable='between(t,{m2_start:.2f},{m2_end:.2f})'[v1]",
 
-        # Card 1 (Client Prediction): Top 2/3 at y=80
+        # Card 1 (Sub-Tick Timeline): Top 2/3 at y=80
         f"[4:v]scale=1000:-1,format=rgba,fade=t=in:st={c1_start:.2f}:d=0.25:alpha=1,fade=t=out:st={c1_end-0.25:.2f}:d=0.25:alpha=1[v_c1]",
         f"[v1][v_c1]overlay=(W-w)/2:80:enable='between(t,{c1_start:.2f},{c1_end:.2f})'[v2]",
 
@@ -304,7 +290,6 @@ def build_episode_13():
         f"[v_sub_pre]subtitles=filename='{rel_sub_path}'[v_final]"
     ]
 
-    # Audio mixing (Original gameplay audio preserved, BGM during investigation, voiceover)
     if has_bgm:
         bgm_delay_ms = int(block_timings["investigation"]["start"] * 1000)
         filter_chains.extend([
@@ -360,7 +345,7 @@ def build_episode_13():
                 "Разбор бага в CS2:\n"
                 "00:00 - Затанчил пробитие?\n"
                 "00:05 - Почему выстрел в голову не засчитали\n"
-                "00:10 - Клиентское предсказание (Client Prediction & Sub-tick)\n"
+                "00:10 - Шкала времени Sub-Tick (Client Prediction)\n"
                 "00:20 - Серверный роллбэк (Server Authority & Hit Rejection)\n"
                 "00:30 - Ставь лайк и подписывайся на Onter's inn!\n\n"
                 "#cs2 #counterstrike2 #csgo #ontersinn #геймдев #баги #физика #шортс #shorts"

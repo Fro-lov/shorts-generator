@@ -16,8 +16,8 @@ if not os.path.exists(CHROME_PATH):
 class Episode13VisualsGenerator:
     """
     Generates high-contrast vertical diagrams (1000x1280) for Episode 13 (CS2 Sub-Tick & Prediction Rollback):
-    - Card 1: Client-Side Prediction (Local Hitmarker & Premature Despawn Animation)
-    - Card 2: Server Rollback & Revert (Server Authority, Sub-tick Timestamp Validation, Revert Command)
+    - Card 1: Sub-Tick Timeline with scrolling events ("Ты попал в голову", "Клиент предсказал", "Сервер опроверг", "Игрок дальше стреляет")
+    - Card 2: Server Rollback & Revert State
     """
 
     def __init__(self, width: int = 1000, height: int = 1280):
@@ -74,9 +74,14 @@ class Episode13VisualsGenerator:
 
         return output_image_path
 
-    def render_card1_client_prediction(self, output_path: Path) -> Path:
+    def render_card1_subtick_timeline(self, output_path: Path) -> Path:
         """
-        Card 1: Client-Side Prediction Flow (1000x1280)
+        Card 1: Sub-Tick Interactive Timeline (1000x1280)
+        Events scrolling along time axis with exact markers requested by user:
+        1. "Ты попал в голову"
+        2. "Клиент предсказал"
+        3. "Сервер опроверг"
+        4. "Игрок дальше стреляет"
         """
         html = f"""
         <div style="
@@ -85,7 +90,7 @@ class Episode13VisualsGenerator:
             background: #14161a;
             border: 3px solid #2d3340;
             border-radius: 36px;
-            padding: 44px 48px;
+            padding: 40px 44px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -93,69 +98,119 @@ class Episode13VisualsGenerator:
             box-shadow: 0 35px 80px rgba(0, 0, 0, 0.95);
         ">
             <!-- Header -->
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #282e3b; padding-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #282e3b; padding-bottom: 20px;">
                 <div>
-                    <h2 style="font-size: 42px; font-weight: 900; color: #f8fafc; letter-spacing: -0.5px;">МЕХАНИКА CS2: ЭТАП 1</h2>
-                    <p style="font-size: 26px; color: #94a3b8; font-weight: 600; margin-top: 6px;">Клиентское предсказание (Client Prediction)</p>
+                    <h2 style="font-size: 40px; font-weight: 900; color: #f8fafc; letter-spacing: -0.5px;">САБ-ТИК ШКАЛА ВРЕМЕНИ</h2>
+                    <p style="font-size: 24px; color: #38bdf8; font-weight: 700; margin-top: 4px;">CS2 Sub-Tick Event Pipeline</p>
                 </div>
-                <div style="background: #38bdf8; color: #0f172a; padding: 12px 24px; border-radius: 16px; font-weight: 900; font-size: 24px;">
-                    0 MS LAG
+                <div style="background: #38bdf8; color: #0f172a; padding: 10px 20px; border-radius: 14px; font-weight: 900; font-size: 22px;">
+                    TIMELINE
                 </div>
             </div>
 
-            <!-- Block 1: Input & Sub-tick timestamp -->
+            <!-- Timeline Diagram Visual -->
             <div style="
-                flex: 1;
-                margin-top: 24px;
-                background: #1a1e27;
-                border: 2px solid #2d3545;
-                border-left: 12px solid #38bdf8;
-                border-radius: 26px;
-                padding: 30px 36px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
+                background: #181c24;
+                border: 2px solid #2e3648;
+                border-radius: 24px;
+                padding: 24px;
+                margin-top: 16px;
+                position: relative;
             ">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                    <span style="font-size: 34px; font-weight: 800; color: #38bdf8;">1. ЛКМ КЛИК (SUB-TICK)</span>
-                    <span style="background: rgba(56,189,248,0.2); color: #38bdf8; padding: 6px 16px; border-radius: 10px; font-size: 20px; font-weight: 700;">t = 14.2ms</span>
+                <!-- Time Axis Header -->
+                <div style="display: flex; justify-content: space-between; color: #64748b; font-weight: 800; font-size: 20px; margin-bottom: 12px; font-family: monospace;">
+                    <span>0.0 ms</span>
+                    <span>4.2 ms</span>
+                    <span>16.6 ms (Tick 1)</span>
+                    <span>22.0 ms</span>
                 </div>
-                <p style="font-size: 30px; color: #e2e8f0; line-height: 1.4; font-weight: 500;">
-                    Твой ПК мгновенно фиксирует нажатие клавиши и ставит микросекундную метку (Sub-tick Timestamp).
-                </p>
+
+                <!-- Main Axis Line -->
+                <div style="height: 8px; background: linear-gradient(90deg, #38bdf8 0%, #fbbf24 40%, #ef4444 75%, #a855f7 100%); border-radius: 4px; position: relative; margin-bottom: 20px;">
+                    <div style="position: absolute; left: 15%; top: -6px; width: 20px; height: 20px; background: #38bdf8; border-radius: 50%; border: 3px solid #fff;"></div>
+                    <div style="position: absolute; left: 35%; top: -6px; width: 20px; height: 20px; background: #fbbf24; border-radius: 50%; border: 3px solid #fff;"></div>
+                    <div style="position: absolute; left: 68%; top: -6px; width: 20px; height: 20px; background: #ef4444; border-radius: 50%; border: 3px solid #fff;"></div>
+                    <div style="position: absolute; left: 90%; top: -6px; width: 20px; height: 20px; background: #a855f7; border-radius: 50%; border: 3px solid #fff;"></div>
+                </div>
             </div>
 
-            <!-- Connector Arrow -->
-            <div style="text-align: center; margin: 10px 0; color: #fbbf24; font-size: 36px; font-weight: 900;">
-                ⇓ ПРЕДСКАЗАНИЕ БЕЗ ЗАДЕРЖКИ ⇓
-            </div>
-
-            <!-- Block 2: Premature Visual hit & fall -->
+            <!-- Event 1 -->
             <div style="
-                flex: 1;
                 background: #1a1e27;
-                border: 2px solid #2d3545;
-                border-left: 12px solid #fbbf24;
-                border-radius: 26px;
-                padding: 30px 36px;
+                border-left: 10px solid #38bdf8;
+                border-radius: 18px;
+                padding: 18px 24px;
+                margin-top: 14px;
                 display: flex;
-                flex-direction: column;
-                justify-content: center;
+                align-items: center;
+                justify-content: space-between;
             ">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                    <span style="font-size: 34px; font-weight: 800; color: #fbbf24;">2. ЛОКАЛЬНЫЙ ХИТМАРКЕР</span>
-                    <span style="background: rgba(251,191,36,0.2); color: #fbbf24; padding: 6px 16px; border-radius: 10px; font-size: 20px; font-weight: 700;">PREDICTED HEADSHOT</span>
+                <div>
+                    <div style="font-size: 26px; font-weight: 800; color: #38bdf8;">1. ТЫ ПОПАЛ В ГОЛОВУ 🎯</div>
+                    <div style="font-size: 22px; color: #cbd5e1; margin-top: 4px;">ЛКМ Клик • Точная временная метка (Sub-Tick Timestamp t=4.2ms)</div>
                 </div>
-                <p style="font-size: 30px; color: #e2e8f0; line-height: 1.4; font-weight: 500;">
-                    Чтобы не было отзывчивого лага, ПК <b style="color: #fff;">сразу запускает анимацию отлета врага на спавн</b>, не дожидаясь ответа сервера!
-                </p>
+                <div style="background: rgba(56,189,248,0.2); color: #38bdf8; padding: 6px 14px; border-radius: 10px; font-weight: 800; font-size: 18px;">t = 4.2ms</div>
+            </div>
+
+            <!-- Event 2 -->
+            <div style="
+                background: #1a1e27;
+                border-left: 10px solid #fbbf24;
+                border-radius: 18px;
+                padding: 18px 24px;
+                margin-top: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            ">
+                <div>
+                    <div style="font-size: 26px; font-weight: 800; color: #fbbf24;">2. КЛИЕНТ ПРЕДСКАЗАЛ ⚡</div>
+                    <div style="font-size: 22px; color: #cbd5e1; margin-top: 4px;">ПК сразу рисует попадание и отлет врага на спавн</div>
+                </div>
+                <div style="background: rgba(251,191,36,0.2); color: #fbbf24; padding: 6px 14px; border-radius: 10px; font-weight: 800; font-size: 18px;">0ms Lag</div>
+            </div>
+
+            <!-- Event 3 -->
+            <div style="
+                background: #1a1e27;
+                border-left: 10px solid #ef4444;
+                border-radius: 18px;
+                padding: 18px 24px;
+                margin-top: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            ">
+                <div>
+                    <div style="font-size: 26px; font-weight: 800; color: #f87171;">3. СЕРВЕР ОПРОВЕРГ ❌</div>
+                    <div style="font-size: 22px; color: #cbd5e1; margin-top: 4px;">Сверка тика t=4.2ms ➔ Сервер видит промах! Hit Rejected</div>
+                </div>
+                <div style="background: rgba(239,68,68,0.2); color: #f87171; padding: 6px 14px; border-radius: 10px; font-weight: 800; font-size: 18px;">Rollback</div>
+            </div>
+
+            <!-- Event 4 -->
+            <div style="
+                background: #1a1e27;
+                border-left: 10px solid #a855f7;
+                border-radius: 18px;
+                padding: 18px 24px;
+                margin-top: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            ">
+                <div>
+                    <div style="font-size: 26px; font-weight: 800; color: #c084fc;">4. ИГРОК ДАЛЬШЕ СТРЕЛЯЕТ 🔫</div>
+                    <div style="font-size: 22px; color: #cbd5e1; margin-top: 4px;">Принудительный откат ➔ Враг воскресает прямо в бою!</div>
+                </div>
+                <div style="background: rgba(168,85,247,0.2); color: #c084fc; padding: 6px 14px; border-radius: 10px; font-weight: 800; font-size: 18px;">Revert</div>
             </div>
 
             <!-- Footer -->
-            <div style="margin-top: 24px; background: #1f2533; border: 2px solid #3b465e; border-radius: 22px; padding: 22px 32px; display: flex; align-items: center; gap: 20px;">
-                <span style="font-size: 40px;">🎯</span>
-                <span style="font-size: 26px; font-weight: 700; color: #f8fafc; line-height: 1.3;">
-                    На твоем мониторе противник уже отлетает, но сервер пока ничего не знает!
+            <div style="margin-top: 16px; background: #1f2533; border: 2px solid #3b465e; border-radius: 20px; padding: 18px 28px; display: flex; align-items: center; gap: 16px;">
+                <span style="font-size: 34px;">⏱️</span>
+                <span style="font-size: 24px; font-weight: 700; color: #f8fafc; line-height: 1.3;">
+                    Итог: Саб-тик фиксирует точный миг выстрела, но сервер имеет право вето!
                 </span>
             </div>
         </div>
@@ -209,7 +264,7 @@ class Episode13VisualsGenerator:
                     <span style="background: rgba(239,68,68,0.2); color: #f87171; padding: 5px 14px; border-radius: 10px; font-size: 19px; font-weight: 700;">SERVER AUTHORITY</span>
                 </div>
                 <p style="font-size: 29px; color: #e2e8f0; line-height: 1.35; font-weight: 500;">
-                    Сервер получает пакет с пингом, отматывает мир назад на t = 14.2ms и проверяет позицию хитбокса.
+                    Сервер получает пакет с пингом, отматывает мир назад на t = 4.2ms и проверяет позицию хитбокса.
                 </p>
             </div>
 
@@ -280,8 +335,8 @@ if __name__ == "__main__":
     gen = Episode13VisualsGenerator()
     out1 = Path(r"e:\social\output\13\visuals\card1_client_prediction.png")
     out2 = Path(r"e:\social\output\13\visuals\card2_server_rollback.png")
-    print("Generating Card 1 (Client Prediction)...")
-    gen.render_card1_client_prediction(out1)
+    print("Generating Card 1 (Sub-Tick Timeline)...")
+    gen.render_card1_subtick_timeline(out1)
     print("Generating Card 2 (Server Rollback)...")
     gen.render_card2_server_rollback(out2)
     print("Done Episode 13 Visuals!")
