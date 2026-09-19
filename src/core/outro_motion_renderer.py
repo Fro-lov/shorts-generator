@@ -143,9 +143,10 @@ def build_outro_html_template() -> str:
     }}
 
     .sub-btn.subscribed {{
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        border-color: #10b981;
-        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        background: linear-gradient(135deg, #27272a 0%, #18181b 100%);
+        border-color: #52525b;
+        color: #e4e4e7;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
     }}
 
     .cursor-img {{
