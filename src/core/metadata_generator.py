@@ -1,4 +1,4 @@
-﻿import json
+import json
 from pathlib import Path
 from typing import Dict, Any, List
 
@@ -99,7 +99,7 @@ class MetadataGenerator:
                 )
                 pinned_comment = custom_meta.get(
                     "pinned_comment",
-                    f"👇 А с какими самыми нелепыми багами или смертями в {game} сталкивались вы? Пишите в комментариях!"
+                    f"👇 А с какими самыми нелепыми багами или поломками в {game} сталкивались вы? Пишите в комментариях!"
                 )
         else:
             pinned_comment = custom_meta.get("pinned_comment", "👇 Comment below!")
