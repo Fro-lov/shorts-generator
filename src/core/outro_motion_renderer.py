@@ -1,7 +1,8 @@
 """
-Outro Motion UI Renderer for GameBug / Onter's inn Shorts Engine.
+Outro Motion UI Renderer for GameBug / Onter's inn Shorts Engine (RU & EN).
 Renders a 5.0s 30 FPS Green Screen (#00FF00) motion animation of the universal subscribe banner:
 - HTML DOM rendering guaranteed for 100% visible 3D cursor, YouTube Shorts & TikTok icons
+- Multilingual support: RU ("ПОДПИСАТЬСЯ НА КАНАЛ" / "ВЫ ПОДПИСАНЫ! ✓") & EN ("SUBSCRIBE TO CHANNEL" / "SUBSCRIBED! ✓")
 - Full original audio track click.mp3 ("Noice... [click]") aligned perfectly with motion
 - 5.0 second duration (150 frames) for comfortable viewing and episode composition
 """
@@ -34,10 +35,19 @@ def get_base64_data_uri(file_path: Path, mime_type: str) -> str:
     return f"data:{mime_type};base64,{b64}"
 
 
-def build_outro_html_template() -> str:
+def build_outro_html_template(lang: str = "ru") -> str:
     yt_b64 = get_base64_data_uri(BASE_DIR / "assets" / "icons" / "Youtube_shorts_icon.svg.webp", "image/webp")
     tt_b64 = get_base64_data_uri(BASE_DIR / "assets" / "icons" / "tik-tok-glitch-icon-social-media-tik-tok-icon-vinnitsa-ukraine-february-22-02-2023_250246-536.avif", "image/avif")
     cursor_b64 = get_base64_data_uri(BASE_DIR / "assets" / "icons" / "pngtree-arrow-mouse-cursor-3d-cursor-png-image_10172240.png", "image/png")
+
+    if lang == "en":
+        subtitle_text = "Fresh game bug breakdowns every day!"
+        btn_initial_text = "SUBSCRIBE TO CHANNEL"
+        btn_subscribed_text = "SUBSCRIBED! ✓"
+    else:
+        subtitle_text = "Свежие разборы багов каждый день!"
+        btn_initial_text = "ПОДПИСАТЬСЯ НА КАНАЛ"
+        btn_subscribed_text = "ВЫ ПОДПИСАНЫ! ✓"
 
     html = f"""<!DOCTYPE html>
 <html>
@@ -186,12 +196,12 @@ def build_outro_html_template() -> str:
                 <span class="channel-name">Onter's inn</span>
                 <span class="shorts-tag">SHORTS</span>
             </div>
-            <span class="subtitle">Свежие разборы багов каждый день!</span>
+            <span class="subtitle">{subtitle_text}</span>
         </div>
     </div>
 
     <div class="sub-btn" id="btn">
-        <span id="btnText">ПОДПИСАТЬСЯ НА КАНАЛ</span>
+        <span id="btnText">{btn_initial_text}</span>
         <div class="ripple" id="ripple"></div>
     </div>
 
@@ -199,6 +209,9 @@ def build_outro_html_template() -> str:
 </div>
 
 <script>
+const INITIAL_TEXT = "{btn_initial_text}";
+const SUBSCRIBED_TEXT = "{btn_subscribed_text}";
+
 function setTime(t) {{
     const card = document.getElementById('card');
     const btn = document.getElementById('btn');
@@ -253,7 +266,7 @@ function setTime(t) {{
 
     if (isClicked) {{
         btn.classList.add('subscribed');
-        btnText.innerText = 'ВЫ ПОДПИСАНЫ! ✓';
+        btnText.innerText = SUBSCRIBED_TEXT;
 
         // Ripple expansion (1.5s - 1.8s)
         if (t < 1.8) {{
@@ -267,7 +280,7 @@ function setTime(t) {{
         }}
     }} else {{
         btn.classList.remove('subscribed');
-        btnText.innerText = 'ПОДПИСАТЬСЯ НА КАНАЛ';
+        btnText.innerText = INITIAL_TEXT;
         ripple.style.opacity = 0;
     }}
 }}
@@ -300,25 +313,26 @@ def render_single_frame(html_path: Path, frame_idx: int, t_sec: float, frames_di
     return out_png
 
 
-def render_outro_motion_video(output_mp4: Path, duration_sec: float = 5.0, fps: int = 30) -> Path:
+def render_outro_motion_video(output_mp4: Path, duration_sec: float = 5.0, fps: int = 30, lang: str = "ru") -> Path:
     output_mp4 = Path(output_mp4)
     output_mp4.parent.mkdir(parents=True, exist_ok=True)
 
-    if TEMP_DIR.exists():
-        shutil.rmtree(TEMP_DIR, ignore_errors=True)
-    TEMP_DIR.mkdir(parents=True, exist_ok=True)
+    job_temp_dir = BASE_DIR / "output" / "temp" / f"outro_motion_job_{lang}"
+    if job_temp_dir.exists():
+        shutil.rmtree(job_temp_dir, ignore_errors=True)
+    job_temp_dir.mkdir(parents=True, exist_ok=True)
 
-    frames_dir = TEMP_DIR / "frames"
+    frames_dir = job_temp_dir / "frames"
     frames_dir.mkdir(exist_ok=True)
 
     audio_file = BASE_DIR / "assets" / "sfx" / "click.mp3"
 
     # 1. Write HTML file
-    html_file = TEMP_DIR / "index.html"
-    html_file.write_text(build_outro_html_template(), encoding="utf-8")
+    html_file = job_temp_dir / "index.html"
+    html_file.write_text(build_outro_html_template(lang=lang), encoding="utf-8")
 
     total_frames = int(duration_sec * fps)
-    print(f"[RENDER] Рендеринг {total_frames} кадров Green Screen Outro Motion UI ({duration_sec}s, 30 FPS)...")
+    print(f"[RENDER] Рендеринг {total_frames} кадров Green Screen Outro Motion UI [{lang.upper()}] ({duration_sec}s, 30 FPS)...")
 
     # Parallel render using 4 Chrome worker threads
     tasks = []
@@ -333,14 +347,13 @@ def render_outro_motion_video(output_mp4: Path, duration_sec: float = 5.0, fps: 
             fut.result()
             if (idx + 1) % 30 == 0 or (idx + 1) == total_frames:
                 pct = int(((idx + 1) / total_frames) * 100)
-                print(f"   ✓ Снято кадров: {pct}% ({idx+1}/{total_frames})...")
+                print(f"   ✓ [{lang.upper()}] Снято кадров: {pct}% ({idx+1}/{total_frames})...")
 
     t1 = time.time()
-    print(f"   ✓ Все {total_frames} кадров сняты за {t1-t0:.2f} сек!")
+    print(f"   ✓ Все {total_frames} кадров [{lang.upper()}] сняты за {t1-t0:.2f} сек!")
 
     # 2. Composite Frames + Full original click.mp3 audio track starting at t=0s via FFmpeg NVENC
-    # In click.mp3: 'Noice' voice plays t=0.3s-0.7s during fly-in, exact mouse click hits at t=1.49s!
-    print("[FFMPEG] Сборка 5.0s MP4 видеоклипа с полным аудио треком click.mp3 (голос + щелчок)...")
+    print(f"[FFMPEG] Сборка 5.0s MP4 [{lang.upper()}] с аудио треком click.mp3...")
     cmd_ffmpeg = [
         FFMPEG_PATH, "-y",
         "-r", str(fps),
@@ -358,13 +371,17 @@ def render_outro_motion_video(output_mp4: Path, duration_sec: float = 5.0, fps: 
     subprocess.run(cmd_ffmpeg, capture_output=True, check=True)
 
     # Clean up temp
-    shutil.rmtree(TEMP_DIR, ignore_errors=True)
-    print(f"[SUCCESS] Итоговый 5.0s Green Screen Outro Motion видеоклип создан: {output_mp4}")
+    shutil.rmtree(job_temp_dir, ignore_errors=True)
+    print(f"[SUCCESS] Итоговый [{lang.upper()}] Green Screen Outro Motion видеоклип создан: {output_mp4}")
     return output_mp4
 
 
 if __name__ == "__main__":
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
-    out_path = BASE_DIR / "output" / "templates" / "outro_subscribe_motion.mp4"
-    render_outro_motion_video(out_path, duration_sec=5.0)
+    
+    ru_path = BASE_DIR / "output" / "templates" / "outro_subscribe_motion.mp4"
+    en_path = BASE_DIR / "output" / "templates" / "outro_subscribe_motion_en.mp4"
+
+    render_outro_motion_video(ru_path, duration_sec=5.0, lang="ru")
+    render_outro_motion_video(en_path, duration_sec=5.0, lang="en")
