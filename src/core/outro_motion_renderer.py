@@ -1,21 +1,17 @@
 """
 Outro Motion UI Renderer for GameBug / Onter's inn Shorts Engine.
-Renders a 4.5s 30 FPS Green Screen (#00FF00) motion animation of the universal subscribe banner:
-- Assets from assets/icons/ (YouTube Shorts, TikTok, 3D Cursor)
-- Pure Green Screen background (#00FF00) for seamless FFmpeg Chroma Keying (colorkey=0x00FF00)
-- 3D cursor movement, button click press pop, dynamic Emerald color transition ("ВЫ ПОДПИСАНЫ! ✓")
-- Precise sound effect sync with click.mp3 trimmed at exact click transient (t=1.48s)
-- 4.5 second duration for comfortable viewing and loop integration
+Renders a 5.0s 30 FPS Green Screen (#00FF00) motion animation of the universal subscribe banner:
+- HTML DOM rendering guaranteed for 100% visible 3D cursor, YouTube Shorts & TikTok icons
+- Full original audio track click.mp3 ("Noice... [click]") aligned perfectly with motion
+- 5.0 second duration (150 frames) for comfortable viewing and episode composition
 """
 
 import base64
-import json
 import os
 import shutil
 import subprocess
 import sys
 import time
-import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -36,28 +32,6 @@ def get_base64_data_uri(file_path: Path, mime_type: str) -> str:
     raw = Path(file_path).read_bytes()
     b64 = base64.b64encode(raw).decode("utf-8")
     return f"data:{mime_type};base64,{b64}"
-
-
-def prepare_trimmed_click_sound(output_wav: Path) -> Path:
-    """
-    Trims silence and the leading 'Noice' voice from assets/sfx/click.mp3
-    so that only the sharp mouse click sound at t=1.48s is extracted.
-    """
-    output_wav = Path(output_wav)
-    output_wav.parent.mkdir(parents=True, exist_ok=True)
-    input_mp3 = BASE_DIR / "assets" / "sfx" / "click.mp3"
-
-    # Click peak starts at 1.48s in click.mp3
-    cmd = [
-        FFMPEG_PATH, "-y",
-        "-ss", "1.48",
-        "-i", str(input_mp3),
-        "-t", "0.35",
-        "-c:a", "pcm_s16le",
-        str(output_wav)
-    ]
-    subprocess.run(cmd, capture_output=True, check=True)
-    return output_wav
 
 
 def build_outro_html_template() -> str:
@@ -85,187 +59,223 @@ def build_outro_html_template() -> str:
         justify-content: center;
         overflow: hidden;
     }}
-    canvas {{
-        width: 1000px;
-        height: 340px;
-        display: block;
-        background: #00ff00;
+    .card-container {{
+        width: 980px;
+        height: 320px;
+        background: #141720;
+        border: 2.5px solid #2e3444;
+        border-radius: 24px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(225, 29, 72, 0.15);
+        padding: 24px 30px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+        transform-origin: center center;
+    }}
+
+    .top-row {{
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }}
+    .icon-badge {{
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        object-fit: cover;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }}
+    .divider {{
+        width: 2px;
+        height: 40px;
+        background: #2e3444;
+    }}
+    .channel-info {{
+        display: flex;
+        flex-direction: column;
+    }}
+    .title-row {{
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }}
+    .channel-name {{
+        font-size: 32px;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: -0.5px;
+    }}
+    .shorts-tag {{
+        background: #e11d48;
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }}
+    .subtitle {{
+        font-size: 18px;
+        color: #94a3b8;
+        font-weight: 500;
+        margin-top: 2px;
+    }}
+
+    .sub-btn {{
+        width: 100%;
+        height: 125px;
+        background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+        border: 2.5px solid #f43f5e;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        box-shadow: 0 10px 25px rgba(225, 29, 72, 0.4);
+        position: relative;
+        transform-origin: center center;
+    }}
+
+    .sub-btn.subscribed {{
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        border-color: #10b981;
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+    }}
+
+    .cursor-img {{
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 72px;
+        height: 72px;
+        object-fit: contain;
+        pointer-events: none;
+        z-index: 100;
+        filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6));
+        transform-origin: top left;
+    }}
+
+    .ripple {{
+        position: absolute;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        border: 4px solid #ffffff;
+        transform: scale(0);
+        opacity: 0;
+        pointer-events: none;
     }}
 </style>
 </head>
 <body>
-<canvas id="c" width="1000" height="340"></canvas>
+
+<div class="card-container" id="card">
+    <div class="top-row">
+        <img class="icon-badge" id="ytIcon" src="{yt_b64}" alt="YouTube Shorts">
+        <img class="icon-badge" id="ttIcon" src="{tt_b64}" alt="TikTok">
+        <div class="divider"></div>
+        <div class="channel-info">
+            <div class="title-row">
+                <span class="channel-name">Onter's inn</span>
+                <span class="shorts-tag">SHORTS</span>
+            </div>
+            <span class="subtitle">Свежие разборы багов каждый день!</span>
+        </div>
+    </div>
+
+    <div class="sub-btn" id="btn">
+        <span id="btnText">ПОДПИСАТЬСЯ НА КАНАЛ</span>
+        <div class="ripple" id="ripple"></div>
+    </div>
+
+    <img class="cursor-img" id="cursor" src="{cursor_b64}" alt="Cursor">
+</div>
 
 <script>
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
+function setTime(t) {{
+    const card = document.getElementById('card');
+    const btn = document.getElementById('btn');
+    const btnText = document.getElementById('btnText');
+    const cursor = document.getElementById('cursor');
+    const ripple = document.getElementById('ripple');
 
-const imgYT = new Image();
-const imgTT = new Image();
-const imgCursor = new Image();
-
-imgYT.src = "{yt_b64}";
-imgTT.src = "{tt_b64}";
-imgCursor.src = "{cursor_b64}";
-
-function drawRoundedRect(ctx, x, y, w, h, r, fill, stroke, strokeWidth) {{
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-    if (fill) {{
-        ctx.fillStyle = fill;
-        ctx.fill();
-    }}
-    if (stroke) {{
-        ctx.strokeStyle = stroke;
-        ctx.lineWidth = strokeWidth || 1;
-        ctx.stroke();
-    }}
-}}
-
-function renderFrame(t) {{
-    // 1. Clear with Green Screen background (#00FF00)
-    ctx.fillStyle = '#00ff00';
-    ctx.fillRect(0, 0, 1000, 340);
-
-    ctx.save();
-
-    // Entrance animation (0.0s - 0.4s)
-    let cardScale = 1.0;
-    let cardAlpha = 1.0;
+    // 1. Entrance animation (0.0s - 0.4s)
     if (t < 0.4) {{
         const p = t / 0.4;
-        cardScale = 0.8 + 0.2 * Math.sin(p * Math.PI / 2);
-        cardAlpha = p;
+        const scale = 0.8 + 0.2 * Math.sin(p * Math.PI / 2);
+        card.style.transform = `scale(${{scale}})`;
+        card.style.opacity = p;
+    }} else {{
+        card.style.transform = 'scale(1)';
+        card.style.opacity = 1;
     }}
 
-    ctx.globalAlpha = cardAlpha;
-    ctx.translate(500, 170);
-    ctx.scale(cardScale, cardScale);
-    ctx.translate(-500, -170);
-
-    // Main Dark Box Container (#141720)
-    drawRoundedRect(ctx, 10, 10, 980, 320, 24, '#141720', '#2e3444', 2.5);
-    // Top highlight line
-    drawRoundedRect(ctx, 10, 10, 980, 12, 6, '#2e3440', null);
-
-    // 2. Logos & Branding
-    // YouTube Shorts Icon Badge
-    ctx.save();
-    drawRoundedRect(ctx, 40, 42, 54, 54, 14, '#000000', null);
-    ctx.clip();
-    ctx.drawImage(imgYT, 40, 42, 54, 54);
-    ctx.restore();
-
-    // TikTok Icon Badge
-    ctx.save();
-    drawRoundedRect(ctx, 106, 42, 54, 54, 14, '#000000', null);
-    ctx.clip();
-    ctx.drawImage(imgTT, 106, 42, 54, 54);
-    ctx.restore();
-
-    // Vertical Divider
-    ctx.fillStyle = '#2e3444';
-    ctx.fillRect(178, 46, 2, 46);
-
-    // Channel Title Text
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 32px Arial, sans-serif';
-    ctx.fillText("Onter's inn", 196, 75);
-
-    // SHORTS Tag
-    const nameWidth = ctx.measureText("Onter's inn").width;
-    const tagX = 196 + nameWidth + 14;
-    drawRoundedRect(ctx, tagX, 48, 86, 28, 7, '#e11d48', null);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 14px Arial, sans-serif';
-    ctx.fillText("SHORTS", tagX + 10, 67);
-
-    // Subtitle
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '500 18px Arial, sans-serif';
-    ctx.fillText("Свежие разборы багов каждый день!", 196, 102);
-
-    // 3. Subscribe Button
-    const isClicked = t >= 1.5;
-    const isPressing = t >= 1.4 && t < 1.5;
-
-    let btnY = 135;
-    let btnH = 150;
-    let btnFill = isClicked ? '#059669' : '#e11d48';
-    let btnStroke = isClicked ? '#10b981' : '#f43f5e';
-    let btnText = isClicked ? "ВЫ ПОДПИСАНЫ! ✓" : "ПОДПИСАТЬСЯ НА КАНАЛ";
-
-    ctx.save();
-    if (isPressing) {{
-        ctx.translate(500, 210);
-        ctx.scale(0.97, 0.97);
-        ctx.translate(-500, -210);
-    }}
-
-    drawRoundedRect(ctx, 40, btnY, 920, btnH, 20, btnFill, btnStroke, 3);
-
-    // Button Text
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 32px Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(btnText, 500, btnY + btnH / 2);
-
-    // Click Ripple Animation (1.5s - 1.8s)
-    if (t >= 1.5 && t < 1.8) {{
-        const rp = (t - 1.5) / 0.3;
-        const radius = rp * 140;
-        const alpha = 1.0 - rp;
-        ctx.beginPath();
-        ctx.arc(680, 210, radius, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(255, 255, 255, ${{alpha}})`;
-        ctx.lineWidth = 4;
-        ctx.stroke();
-    }}
-    ctx.restore();
-
-    // 4. Animated 3D Mouse Cursor Movement
-    const startX = 820;
-    const startY = 280;
-    const targetX = 640;
-    const targetY = 180;
+    // 2. Cursor movement (0.4s - 1.4s)
+    const startX = 760;
+    const startY = 270;
+    const targetX = 620;
+    const targetY = 175;
 
     let curX = startX;
     let curY = startY;
 
-    if (t >= 0.4 && t < 1.4) {{
+    if (t < 0.4) {{
+        curX = startX;
+        curY = startY;
+    }} else if (t < 1.4) {{
         const p = (t - 0.4) / 1.0;
         const ease = 1 - Math.pow(1 - p, 3);
         curX = startX + (targetX - startX) * ease;
         curY = startY + (targetY - startY) * ease;
-    }} else if (t >= 1.4) {{
+    }} else {{
         curX = targetX;
         curY = targetY;
     }}
 
-    let cursorScale = 1.0;
+    // 3. Click Press & Reaction (1.4s - 1.5s press, 1.5s+ subscribed)
+    const isClicked = t >= 1.5;
+    const isPressing = t >= 1.4 && t < 1.5;
+
     if (isPressing) {{
-        cursorScale = 0.82;
+        cursor.style.transform = `translate(${{curX}}px, ${{curY}}px) scale(0.82)`;
+        btn.style.transform = 'scale(0.96)';
+    }} else {{
+        cursor.style.transform = `translate(${{curX}}px, ${{curY}}px) scale(1.0)`;
+        btn.style.transform = 'scale(1.0)';
     }}
 
-    ctx.save();
-    ctx.translate(curX, curY);
-    ctx.scale(cursorScale, cursorScale);
-    ctx.drawImage(imgCursor, 0, 0, 72, 72);
-    ctx.restore();
+    if (isClicked) {{
+        btn.classList.add('subscribed');
+        btnText.innerText = 'ВЫ ПОДПИСАНЫ! ✓';
 
-    ctx.restore();
+        // Ripple expansion (1.5s - 1.8s)
+        if (t < 1.8) {{
+            const rp = (t - 1.5) / 0.3;
+            ripple.style.left = `${{targetX - 30}}px`;
+            ripple.style.top = `${{targetY - 120}}px`;
+            ripple.style.transform = `scale(${{rp * 1.8}})`;
+            ripple.style.opacity = `${{1.0 - rp}}`;
+        }} else {{
+            ripple.style.opacity = 0;
+        }}
+    }} else {{
+        btn.classList.remove('subscribed');
+        btnText.innerText = 'ПОДПИСАТЬСЯ НА КАНАЛ';
+        ripple.style.opacity = 0;
+    }}
 }}
 
 const urlParams = new URLSearchParams(window.location.search);
 const tVal = parseFloat(urlParams.get('t') || '0');
-renderFrame(tVal);
+setTime(tVal);
 </script>
+
 </body>
 </html>"""
     return html
@@ -289,7 +299,7 @@ def render_single_frame(html_path: Path, frame_idx: int, t_sec: float, frames_di
     return out_png
 
 
-def render_outro_motion_video(output_mp4: Path, duration_sec: float = 4.5, fps: int = 30) -> Path:
+def render_outro_motion_video(output_mp4: Path, duration_sec: float = 5.0, fps: int = 30) -> Path:
     output_mp4 = Path(output_mp4)
     output_mp4.parent.mkdir(parents=True, exist_ok=True)
 
@@ -300,11 +310,9 @@ def render_outro_motion_video(output_mp4: Path, duration_sec: float = 4.5, fps: 
     frames_dir = TEMP_DIR / "frames"
     frames_dir.mkdir(exist_ok=True)
 
-    # 1. Prepare trimmed click audio (extract sharp click sound at t=1.48s)
-    trimmed_audio = TEMP_DIR / "click_trimmed.wav"
-    prepare_trimmed_click_sound(trimmed_audio)
+    audio_file = BASE_DIR / "assets" / "sfx" / "click.mp3"
 
-    # 2. Write HTML file
+    # 1. Write HTML file
     html_file = TEMP_DIR / "index.html"
     html_file.write_text(build_outro_html_template(), encoding="utf-8")
 
@@ -329,14 +337,14 @@ def render_outro_motion_video(output_mp4: Path, duration_sec: float = 4.5, fps: 
     t1 = time.time()
     print(f"   ✓ Все {total_frames} кадров сняты за {t1-t0:.2f} сек!")
 
-    # 3. Composite Frames + Click SFX at t=1.50s via FFmpeg NVENC
-    print("[FFMPEG] Сборка 4.5s MP4 видеоклипа с точным щелчком click.mp3 на t=1.5s...")
+    # 2. Composite Frames + Full original click.mp3 audio track starting at t=0s via FFmpeg NVENC
+    # In click.mp3: 'Noice' voice plays t=0.3s-0.7s during fly-in, exact mouse click hits at t=1.49s!
+    print("[FFMPEG] Сборка 5.0s MP4 видеоклипа с полным аудио треком click.mp3 (голос + щелчок)...")
     cmd_ffmpeg = [
         FFMPEG_PATH, "-y",
         "-r", str(fps),
         "-i", str(frames_dir / "frame_%04d.png"),
-        "-itsoffset", "1.50",
-        "-i", str(trimmed_audio),
+        "-i", str(audio_file),
         "-c:v", VIDEO_CODEC,
         "-preset", VIDEO_PRESET,
         "-cq", VIDEO_CQ,
@@ -350,7 +358,7 @@ def render_outro_motion_video(output_mp4: Path, duration_sec: float = 4.5, fps: 
 
     # Clean up temp
     shutil.rmtree(TEMP_DIR, ignore_errors=True)
-    print(f"[SUCCESS] Итоговый 4.5s Green Screen Outro Motion видеоклип создан: {output_mp4}")
+    print(f"[SUCCESS] Итоговый 5.0s Green Screen Outro Motion видеоклип создан: {output_mp4}")
     return output_mp4
 
 
@@ -358,4 +366,4 @@ if __name__ == "__main__":
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
     out_path = BASE_DIR / "output" / "templates" / "outro_subscribe_motion.mp4"
-    render_outro_motion_video(out_path, duration_sec=4.5)
+    render_outro_motion_video(out_path, duration_sec=5.0)
