@@ -1,5 +1,5 @@
 """
-Outro Motion UI Renderer for GameBug / Onter's inn Shorts Engine (RU & EN).
+Outro Motion UI Renderer for Onter's inn Shorts Engine (RU & EN).
 Renders a 5.0s 30 FPS Green Screen (#00FF00) motion animation of the universal subscribe banner:
 - HTML DOM rendering guaranteed for 100% visible 3D cursor, YouTube Shorts & TikTok icons
 - Multilingual support: RU ("ПОДПИСАТЬСЯ НА КАНАЛ" / "ВЫ ПОДПИСАНЫ! ✓") & EN ("SUBSCRIBE TO CHANNEL" / "SUBSCRIBED! ✓")

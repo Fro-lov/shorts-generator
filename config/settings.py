@@ -18,7 +18,11 @@ for d in [OUTPUT_DIR, ASSETS_DIR, FONTS_DIR, SFX_DIR, MUSIC_DIR, PLACEHOLDERS_DI
 # FFmpeg Executable detection
 def get_ffmpeg_path() -> str:
     try:
-        return imageio_ffmpeg.get_ffmpeg_exe()
+        path = imageio_ffmpeg.get_ffmpeg_exe()
+        ffmpeg_dir = os.path.dirname(path)
+        if ffmpeg_dir not in os.environ.get("PATH", ""):
+            os.environ["PATH"] = ffmpeg_dir + os.pathsep + os.environ.get("PATH", "")
+        return path
     except Exception:
         return "ffmpeg"
 

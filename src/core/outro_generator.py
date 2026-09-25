@@ -1,5 +1,5 @@
 """
-Outro Call-To-Action (CTA) Card Generator for GameBug Shorts Engine.
+Outro Call-To-Action (CTA) Card Generator for Onter's inn Shorts Engine.
 Generates a universal subscribe banner for both YouTube Shorts and TikTok formats.
 """
 
@@ -11,7 +11,7 @@ class OutroCTAGenerator:
     """
     Generates a universal 1000x340 subscribe banner overlay featuring:
     - YouTube Shorts + TikTok logos
-    - GameBug branding
+    - Onter's inn branding
     - Vibrant 'ПОДПИСАТЬСЯ' button
     - Click hand cursor animation
     """

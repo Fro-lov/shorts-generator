@@ -49,7 +49,8 @@ class FFmpegInputManager:
 
 class ShortsEngine:
     """
-    Unified GameBug Shorts Production Engine.
+    Unified Onter's inn Shorts Production Engine.
+    Main entry point for generating complete vertical gaming bug shorts.
     Executes the entire end-to-end shorts creation pipeline in a single command.
     """
 
@@ -90,7 +91,7 @@ class ShortsEngine:
         game_title = self.data.get("game", "Game")
         bug_title = self.data.get("bug_title", "Glitch")
         print("=" * 65)
-        print(f"🚀 ЗАПУСК GAMEBUG SHORTS ENGINE: Выпуск #{self.episode_id} ({game_title} - {bug_title})")
+        print(f"🚀 ЗАПУСК ONTER'S INN SHORTS ENGINE: Выпуск #{self.episode_id} ({game_title} - {bug_title})")
         print("=" * 65)
 
         # 1. Gameplay Resolution
@@ -367,7 +368,7 @@ class ShortsEngine:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="GameBug Shorts Unified Engine")
+    parser = argparse.ArgumentParser(description="Onter's inn Shorts Unified Engine")
     parser.add_argument("scenario", type=str, help="Path to scenario JSON file")
     args = parser.parse_args()
 

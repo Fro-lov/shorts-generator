@@ -39,7 +39,7 @@ class TikTokUploader:
         self.client_secret = self.config.get("client_secret")
         self.redirect_uri = self.config.get("redirect_uri", "https://local.onter.pp.ua/callback")
 
-    def get_auth_url(self, scopes: str = "video.upload,video.publish", state: str = "gamebug_state") -> str:
+    def get_auth_url(self, scopes: str = "video.upload,video.publish", state: str = "onters_inn_state") -> str:
         """Generates the TikTok OAuth 2.0 authorization URL."""
         import urllib.parse
         params = {

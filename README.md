@@ -1,4 +1,4 @@
-# 🎮 GameBug Shorts Engine
+# 🎮 Onter's inn Shorts Engine
 
 Автоматизированный движок для создания вертикальных вирусных видеороликов (**YouTube Shorts**, **TikTok**, **Instagram Reels**) с юмористическим разбором багов и физических глитчей в видеоиграх.
 

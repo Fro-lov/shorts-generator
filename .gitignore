@@ -73,3 +73,11 @@ oauth_credentials.json
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Voices standalone directory
+voices/
+
+# Temporary test audio files
+test_*.mp3
+*.mp3
+
