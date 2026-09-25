@@ -42,18 +42,20 @@
 │   └── settings.py                # Глобальные настройки разрешения, голоса, шрифтов
 ├── output/                        # Каталог готовых выпусков
 │   └── <id>/                      # Изолированная папка эпизода (видео, голос, субтитры, схемы)
-├── scenarios/                     # JSON-сценарии эпизодов
 ├── src/
 │   ├── core/                      # Движок генерации и монтажа
-│   │   ├── tts.py                 # Генератор озвучки
-│   │   ├── subtitles.py           # Генератор субтитров (.ass)
-│   │   ├── diagram_generator.py   # Генератор 2D схем
+│   │   ├── pipeline_runner.py     # Единый движок генерации и монтажа
+│   │   ├── smart_card_generator.py # Генератор компактных 2D-схем и карточек кода
+│   │   ├── quality_validator.py   # Валидатор качества и целостности рендера
+│   │   ├── tts.py                 # Генератор двухголосой озвучки Edge-TTS
+│   │   ├── subtitles.py           # Генератор динамических субтитров (.ass)
+│   │   ├── meme_fetcher.py        # Парсер и загрузчик мемов из Tenor
 │   │   ├── sfx_fetcher.py         # Парсер звуков MyInstants
-│   │   ├── video_meme_engine.py   # Обработка Chroma Key
-│   │   ├── music_generator.py     # Менеджер фоновой музыки
+│   │   ├── outro_generator.py     # Рендерер финального Outro CTA
+│   │   ├── three_renderer.py      # Рендерер 3D WebGL симуляций
 │   │   ├── youtube_downloader.py  # Скачивание фрагментов с YouTube
 │   │   └── output_manager.py      # Управление структурой папок
-│   └── uploader/                  # Модуль автопостинга на YouTube
+│   └── uploader/                  # Модуль автопостинга на YouTube / TikTok
 ├── GEMINI.md                      # Спецификация и правила проекта
 ├── requirements.txt               # Зависимости Python
 └── README.md

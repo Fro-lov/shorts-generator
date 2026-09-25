@@ -20,7 +20,7 @@ from config.settings import (
 )
 from src.core.tts import TTSEngine
 from src.core.subtitles import SubtitleGenerator
-from src.core.episode2_visuals import Episode2VisualsGenerator
+from src.core.smart_card_generator import SmartCardGenerator
 from src.core.output_manager import EpisodeOutputManager
 from src.core.music_generator import get_random_bgm
 from src.core.youtube_downloader import YouTubeDownloader
@@ -187,13 +187,27 @@ class ShortsEngine:
 
         # 5. Generate Visual Cards (Diagrams & Code)
         print("\n[4/6] Отрисовка схем и карточки кода...")
-        vis_gen = Episode2VisualsGenerator(width=1000, height=560)
+        vis_gen = SmartCardGenerator(width=1000)
         diag1_path = self.mgr.visuals_dir / "step1_door.png"
         diag2_path = self.mgr.visuals_dir / "step2_impact.png"
         code_path = self.mgr.visuals_dir / "door_fix_card.png"
-        vis_gen.generate_step1_door(diag1_path)
-        vis_gen.generate_step2_impact(diag2_path)
-        vis_gen.generate_door_fix_card(code_path)
+        vis_gen.generate_diagram_card(
+            diag1_path,
+            title="PHYSICS CHECK",
+            step_tag="STEP 1/2",
+            items=[{"title": "Raycast", "value": "Continuous Collision Detection"}]
+        )
+        vis_gen.generate_diagram_card(
+            diag2_path,
+            title="COLLISION IMPACT",
+            step_tag="STEP 2/2",
+            items=[{"title": "Penetration", "value": "Position Correction Vector"}]
+        )
+        vis_gen.generate_code_card(
+            code_path,
+            filename="PhysicsFix.cs",
+            lines=[("// BUG: missing CCD", "bug"), ("rb.collisionDetectionMode = Continuous;", "fix")]
+        )
 
         # 6. Prepare Background Video
         print("\n[5/6] Создание видеоряда с геймплеем (9:16)...")
