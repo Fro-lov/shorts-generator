@@ -31,10 +31,11 @@ class TenorMemeFetcher:
 
     TENOR_V2_SEARCH_URL = "https://tenor.googleapis.com/v2/search"
 
+    HISTORY_FILE = MEMES_DIR / "used_memes_history.json"
+
     def __init__(self, target_dir: Path = MEMES_DIR, api_key: Optional[str] = None):
         self.target_dir = Path(target_dir)
         self.target_dir.mkdir(parents=True, exist_ok=True)
-        # Check explicit key, env var, or fallback
         self.api_key = api_key or os.getenv("TENOR_API_KEY", "")
         self.headers = {
             "User-Agent": (
@@ -42,16 +43,38 @@ class TenorMemeFetcher:
                 "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             )
         }
+        self.history = self._load_history()
+
+    def _load_history(self) -> List[str]:
+        if self.HISTORY_FILE.exists():
+            try:
+                with open(self.HISTORY_FILE, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return []
+
+    def _record_used(self, url: str):
+        # Keep track of last 100 used meme URLs to avoid repetitions across 10-20 episodes
+        if url not in self.history:
+            self.history.append(url)
+            if len(self.history) > 100:
+                self.history = self.history[-100:]
+            try:
+                with open(self.HISTORY_FILE, "w", encoding="utf-8") as f:
+                    json.dump(self.history, f, indent=2, ensure_ascii=False)
+            except Exception as e:
+                print(f"[TenorMemeFetcher] Failed saving meme history: {e}")
 
     def search_tenor(
         self,
         query: str,
-        limit: int = 5,
-        search_filter: Optional[str] = None,  # "sticker" for transparent background
+        limit: int = 10,
+        search_filter: Optional[str] = None,
     ) -> List[Dict[str, str]]:
         """
-        Searches Tenor API (v2 or v1 public key) for matching GIF memes or transparent stickers.
-        Returns a list of dicts: [{"title": ..., "gif_url": ..., "mp4_url": ..., "format": ...}]
+        Searches Tenor API or public fallback scraper for matching GIF memes.
+        Returns up to `limit` candidates.
         """
         results = []
 
@@ -88,38 +111,16 @@ class TenorMemeFetcher:
             except Exception as e:
                 print(f"[TenorMemeFetcher] Tenor V2 API Notice: {e}")
 
-        # 2. Try Tenor V1 / Giphy Public Keys fallback
-        if not results:
-            giphy_url = f"https://api.giphy.com/v1/gifs/search?q={urllib.parse.quote(query)}&api_key=dc6zaTOxFJmzC&limit={limit}"
-            try:
-                req = urllib.request.Request(giphy_url, headers=self.headers)
-                with urllib.request.urlopen(req, timeout=10) as resp:
-                    data = json.loads(resp.read().decode("utf-8"))
-
-                for item in data.get("data", []):
-                    images = item.get("images", {})
-                    g_url = images.get("original", {}).get("url") or images.get("downsized", {}).get("url")
-                    m_url = images.get("original_mp4", {}).get("mp4") or g_url
-                    if g_url:
-                        results.append({
-                            "id": item.get("id", ""),
-                            "title": item.get("title", query),
-                            "gif_url": g_url,
-                            "mp4_url": m_url
-                        })
-            except Exception as e:
-                print(f"[TenorMemeFetcher] Giphy Fallback Notice: {e}")
-
-        # 3. Fallback to DDG search scraper
+        # 2. Scrape Tenor web search
         if not results:
             results = self._fallback_gif_search(query, limit=limit)
 
         return results
 
-    def _fallback_gif_search(self, query: str, limit: int = 5) -> List[Dict[str, str]]:
+    def _fallback_gif_search(self, query: str, limit: int = 10) -> List[Dict[str, str]]:
         """
-        Scrapes Tenor web search (https://tenor.com/search/...) directly for media.tenor.com URLs.
-        Works 100% autonomously without API keys or rate limits.
+        Scrapes Tenor web search (https://tenor.com/search/...) directly for search result GIFs.
+        Excludes generic sidebar/footer GIFs.
         """
         slug = re.sub(r"[^\w]+", "-", query.lower()).strip("-")
         tenor_web_url = f"https://tenor.com/search/{slug}-gifs"
@@ -130,15 +131,20 @@ class TenorMemeFetcher:
             with urllib.request.urlopen(req, timeout=10) as resp:
                 html = resp.read().decode("utf-8", errors="ignore")
 
-            # Extract tenor media URLs (gif and mp4)
+            # Extract main search result GIF images
+            # Focus on media.tenor.com links that appear inside search results
             matches = re.findall(r"(https://media\.tenor\.com/[^\s\"']+?\.gif)", html)
+            
+            # Filter out generic static badges or common repetitive assets if known
             seen = set()
             for m_url in matches:
                 clean_url = m_url.replace("&amp;", "&")
-                if clean_url not in seen:
-                    seen.add(clean_url)
+                # Normalize URL stem to avoid minor query param duplicates
+                url_stem = clean_url.split("?")[0]
+                if url_stem not in seen:
+                    seen.add(url_stem)
                     results.append({
-                        "id": str(hash(clean_url)),
+                        "id": str(hash(url_stem)),
                         "title": query,
                         "gif_url": clean_url,
                         "mp4_url": clean_url.replace(".gif", ".mp4")
@@ -176,20 +182,41 @@ class TenorMemeFetcher:
         return out_path
 
     def get_or_download_meme(
-        self, query: str, local_filename: str, transparent_sticker: bool = False
+        self, query: str, local_filename: str, transparent_sticker: bool = False, overwrite: bool = True
     ) -> Optional[Path]:
         """
-        Helper method: returns local file if present, otherwise searches and downloads.
+        Helper method: searches Tenor for query and selects a FRESH unused meme from results.
+        Saves chosen meme to history so it won't repeat in the next 10-20 episodes.
         """
         out_path = self.target_dir / local_filename
-        if out_path.exists():
+        if out_path.exists() and not overwrite:
             return out_path
 
+        if out_path.exists():
+            try:
+                out_path.unlink()
+            except Exception:
+                pass
+
         s_filter = "sticker" if transparent_sticker else None
-        results = self.search_tenor(query, limit=1, search_filter=s_filter)
-        if results:
-            target_url = results[0]["gif_url"]
-            return self.download_meme(target_url, local_filename)
+        results = self.search_tenor(query, limit=10, search_filter=s_filter)
+        
+        chosen_url = None
+        for res_item in results:
+            g_url = res_item["gif_url"]
+            stem = g_url.split("?")[0]
+            if stem not in self.history:
+                chosen_url = g_url
+                self._record_used(stem)
+                break
+
+        # Fallback to first result if all candidates were used before
+        if not chosen_url and results:
+            chosen_url = results[0]["gif_url"]
+            self._record_used(chosen_url.split("?")[0])
+
+        if chosen_url:
+            return self.download_meme(chosen_url, local_filename)
 
         return None
 

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro Motion Cards Player (CDP Engine)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #04060a;
+  color: #e2e8f0;
+  font-family: 'Chakra Petch', 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Control Toolbar (Hidden in headless CDP render) */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #0d1522;
+  border: 2px solid #00f0ff;
+  border-radius: 40px;
+  padding: 10px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(0,240,255,0.3);
+  font-family: 'JetBrains Mono', monospace;
+  z-index: 100;
+}
+
+.t-btn {
+  background: #152238;
+  color: #00f0ff;
+  border: 1px solid #00f0ff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.t-btn:hover, .t-btn.active {
+  background: #00f0ff;
+  color: #06090e;
+  box-shadow: 0 0 18px #00f0ff;
+}
+
+/* Vertical 1080x1920 Phone Frame */
+#phone-frame {
+  position: relative;
+  width: 1080px;
+  height: 1920px;
+  background: radial-gradient(120% 80% at 50% 20%, #0d1726 0%, #060a11 50%, #030508 100%);
+  overflow: hidden;
+}
+
+#phone-inner {
+  position: absolute;
+  width: 1080px;
+  height: 1920px;
+  top: 0;
+  left: 0;
+}
+
+/* Top Header Bar */
+.phone-hdr {
+  position: absolute;
+  top: 50px;
+  left: 50px;
+  right: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 26px;
+  color: #64748b;
+  letter-spacing: 2px;
+}
+.phone-hdr .badge-live {
+  background: #ff2a5f;
+  color: #fff;
+  padding: 4px 16px;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 22px;
+  box-shadow: 0 0 16px #ff2a5f;
+}
+
+/* Gameplay Zone (y=190..764, height: 574px) */
+#gameplay-box {
+  position: absolute;
+  top: 190px;
+  left: 40px;
+  width: 1000px;
+  height: 574px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 2px solid rgba(0,240,255,0.35);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.7), 0 0 30px rgba(0,240,255,0.15);
+  background: #000;
+}
+#gameplay-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Pagination Dots */
+#pagination {
+  position: absolute;
+  top: 775px;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  z-index: 50;
+}
+.dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #334155;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.dot.active {
+  background: #00f0ff;
+  box-shadow: 0 0 16px #00f0ff;
+  width: 44px;
+  border-radius: 10px;
+}
+
+/* Motion Cards Zone (y=790..1380, height: 590px, width: 1000px) */
+#motion-zone {
+  position: absolute;
+  top: 790px;
+  left: 40px;
+  width: 1000px;
+  height: 590px;
+  perspective: 1200px;
+}
+
+.slides-wrapper {
+  position: relative;
+  width: 1000px;
+  height: 590px;
+}
+
+/* Individual Slide Card */
+.slide-card {
+  position: absolute;
+  inset: 0;
+  width: 1000px;
+  height: 590px;
+  border-radius: 28px;
+  padding: 36px 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: radial-gradient(110% 90% at 50% 0%, #111b2b 0%, #090e17 60%, #04070c 100%);
+  border: 2px solid rgba(0,240,255,0.3);
+  box-shadow: 0 25px 60px rgba(0,0,0,0.85), inset 0 0 80px rgba(0,0,0,0.6);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(60px) scale(0.96);
+  transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.slide-card.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0) scale(1);
+}
+
+.slide-card.prev {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-60px) scale(0.96);
+}
+
+/* Neon Corner Accents */
+.slide-card::before {
+  content: '';
+  position: absolute;
+  top: 12px; left: 12px; width: 60px; height: 60px;
+  border-top: 4px solid var(--accent, #00f0ff);
+  border-left: 4px solid var(--accent, #00f0ff);
+  border-radius: 18px 0 0 0;
+  filter: drop-shadow(0 0 10px var(--accent, #00f0ff));
+  pointer-events: none;
+}
+.slide-card::after {
+  content: '';
+  position: absolute;
+  bottom: 12px; right: 12px; width: 60px; height: 60px;
+  border-bottom: 4px solid var(--accent, #00f0ff);
+  border-right: 4px solid var(--accent, #00f0ff);
+  border-radius: 0 0 18px 0;
+  filter: drop-shadow(0 0 10px var(--accent, #00f0ff));
+  pointer-events: none;
+}
+
+.slide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.slide-header .tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: var(--accent, #00f0ff);
+  text-transform: uppercase;
+  background: rgba(0,240,255,0.12);
+  border: 1px solid var(--accent, #00f0ff);
+  padding: 6px 20px;
+  border-radius: 12px;
+}
+.slide-header .page-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 32px;
+  font-weight: 800;
+  color: #94a3b8;
+}
+
+.slide-title {
+  font-size: 48px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 1px;
+  line-height: 1.15;
+  text-shadow: 0 0 30px rgba(0,240,255,0.4);
+}
+
+.slide-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  margin: 14px 0;
+}
+
+.slide-banner {
+  background: rgba(255,255,255,0.05);
+  border: 2px solid var(--accent, #00f0ff);
+  border-radius: 18px;
+  padding: 16px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 0 25px rgba(0,240,255,0.15);
+}
+.slide-banner .banner-text {
+  font-size: 36px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.slide-banner .banner-pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--accent, #00f0ff);
+  background: rgba(0,0,0,0.5);
+  padding: 6px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--accent, #00f0ff);
+}
+
+/* SLIDE 1: SPEEDOMETER & STATS */
+.s1 { --accent: #00f0ff; }
+.speedo-wrap { display: flex; align-items: center; gap: 50px; }
+.speedo-circle { position: relative; width: 240px; height: 240px; }
+.speedo-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.speedo-val-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.speedo-num { font-family: 'JetBrains Mono', monospace; font-size: 76px; font-weight: 800; color: #fff; text-shadow: 0 0 30px #00f0ff; line-height: 1; }
+.speedo-unit { font-size: 26px; font-weight: 700; color: #00f0ff; letter-spacing: 4px; }
+.speedo-stats { display: flex; flex-direction: column; gap: 16px; }
+.stat-box { background: rgba(0,240,255,0.08); border-left: 6px solid #00f0ff; padding: 12px 24px; border-radius: 0 14px 14px 0; }
+.stat-box .lbl { font-size: 22px; color: #94a3b8; font-family: 'JetBrains Mono'; }
+.stat-box .val { font-size: 34px; font-weight: 800; color: #fff; }
+
+/* SLIDE 2: QUEUE & PULSE BAR */
+.s2 { --accent: #fee75c; }
+.queue-box { width: 100%; display: flex; flex-direction: column; gap: 20px; }
+.queue-bar-wrap { background: #090e17; border: 2px solid #fee75c; border-radius: 18px; height: 60px; padding: 6px; position: relative; overflow: hidden; box-shadow: 0 0 30px rgba(254,231,92,0.25); }
+.queue-bar-fill { background: linear-gradient(90deg, #fee75c, #ff4757); height: 100%; border-radius: 12px; width: 95%; animation: barPulse 1.2s ease-in-out infinite alternate; }
+@keyframes barPulse { 0% { width: 88%; filter: drop-shadow(0 0 10px #fee75c); } 100% { width: 98%; filter: drop-shadow(0 0 25px #ff4757); } }
+.queue-nums { display: flex; justify-content: space-between; align-items: center; }
+.queue-val { font-family: 'JetBrains Mono', monospace; font-size: 52px; font-weight: 800; color: #fee75c; text-shadow: 0 0 20px rgba(254,231,92,0.6); }
+.queue-status { font-size: 36px; font-weight: 800; color: #ff4757; background: rgba(255,71,87,0.15); border: 2px solid #ff4757; padding: 6px 20px; border-radius: 12px; animation: blink 0.8s infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* SLIDE 3: DUAL DESYNC GRID */
+.s3 { --accent: #ff2ea6; }
+.desync-grid { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.desync-card { background: rgba(0,0,0,0.5); border-radius: 20px; padding: 24px; border: 2px solid #334155; display: flex; flex-direction: column; gap: 12px; }
+.desync-card.ok { border-color: #4ade80; box-shadow: 0 0 30px rgba(74,222,128,0.2); }
+.desync-card.fail { border-color: #ff2a5f; box-shadow: 0 0 30px rgba(255,42,95,0.25); }
+.desync-card .card-title { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 800; color: #94a3b8; }
+.desync-card .card-state { font-size: 40px; font-weight: 800; }
+.desync-card.ok .card-state { color: #4ade80; }
+.desync-card.fail .card-state { color: #ff2a5f; }
+.desync-card .card-desc { font-size: 24px; color: #cbd5e1; }
+
+/* SLIDE 4: IMPACT ALERT */
+.s4 { --accent: #ff4757; }
+.impact-box { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+.impact-badge { font-size: 56px; font-weight: 800; color: #ffffff; background: linear-gradient(90deg, #ff4757, #ff2ea6); padding: 12px 36px; border-radius: 20px; box-shadow: 0 0 40px rgba(255,71,87,0.7); animation: shake 0.5s ease-in-out infinite; }
+@keyframes shake { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.impact-sub { font-size: 34px; font-weight: 700; color: #e2e8f0; text-align: center; }
+
+/* SLIDE 5: IDE CODE FIX */
+.s5 { --accent: #4ade80; }
+.ide-box { width: 100%; background: #0b111a; border: 2px solid #4ade80; border-radius: 18px; overflow: hidden; box-shadow: 0 0 35px rgba(74,222,128,0.25); }
+.ide-head { background: #152233; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155; }
+.ide-dots { display: flex; gap: 8px; }
+.ide-dot { width: 14px; height: 14px; border-radius: 50%; }
+.ide-dot.r { background: #ff5f56; }
+.ide-dot.y { background: #ffbd2e; }
+.ide-dot.g { background: #27c93f; }
+.ide-file { font-family: 'JetBrains Mono', monospace; font-size: 20px; color: #94a3b8; }
+.ide-badge { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 800; color: #4ade80; background: rgba(74,222,128,0.15); padding: 4px 12px; border-radius: 8px; }
+.ide-code { padding: 18px 24px; font-family: 'JetBrains Mono', monospace; font-size: 28px; line-height: 1.5; color: #e2e8f0; }
+.ide-code .kw { color: #569cd6; font-weight: 700; }
+.ide-code .fn { color: #dcdcaa; font-weight: 700; }
+.ide-code .str { color: #ce9178; }
+.ide-code .fix-line { background: rgba(74,222,128,0.18); border-left: 6px solid #4ade80; padding-left: 12px; margin: 4px -24px 4px -24px; padding-right: 24px; color: #4ade80; font-weight: 800; }
+</style>
+</head>
+<body>
+
+<div id="phone-frame">
+  <div id="phone-inner">
+    
+    <!-- Top System Bar -->
+    <div class="phone-hdr">
+      <div id="hdr-title">GAME ENGINE // DEV LOG</div>
+      <div class="badge-live">LIVE REC</div>
+    </div>
+
+    <!-- Gameplay Video Zone -->
+    <div id="gameplay-box">
+      <video id="gameplay-video" src="gameplay_raw.mp4" loop muted playsinline autoplay></video>
+    </div>
+
+    <!-- Pagination Dots -->
+    <div id="pagination">
+      <div class="dot active" data-slide="0"></div>
+      <div class="dot" data-slide="1"></div>
+      <div class="dot" data-slide="2"></div>
+      <div class="dot" data-slide="3"></div>
+      <div class="dot" data-slide="4"></div>
+    </div>
+
+    <!-- Motion Cards Zone -->
+    <div id="motion-zone">
+      <div class="slides-wrapper">
+        
+        <!-- SLIDE 1 -->
+        <div class="slide-card s1 active" id="slide-0">
+          <div class="slide-header">
+            <div class="tag">01 // ТАКТ ФИЗИКИ</div>
+            <div class="page-num">1 / 5</div>
+          </div>
+          <div class="slide-title">МОТОЦИКЛ ЛЕТИТ 140 КМ/Ч</div>
+          <div class="slide-body">
+            <div class="speedo-wrap">
+              <div class="speedo-circle">
+                <svg class="speedo-svg" viewBox="0 0 200 200">
+                  <circle cx="100" cy="100" r="85" fill="none" stroke="#1e293b" stroke-width="16" stroke-dasharray="400" stroke-dashoffset="100" stroke-linecap="round"></circle>
+                  <circle cx="100" cy="100" r="85" fill="none" stroke="#00f0ff" stroke-width="16" stroke-dasharray="400" stroke-dashoffset="190" stroke-linecap="round" style="filter: drop-shadow(0 0 12px #00f0ff);"></circle>
+                </svg>
+                <div class="speedo-val-center">
+                  <div class="speedo-num">140</div>
+                  <div class="speedo-unit">КМ/Ч</div>
+                </div>
+              </div>
+              <div class="speedo-stats">
+                <div class="stat-box">
+                  <div class="lbl">ПОТОК PhysX</div>
+                  <div class="val">60 ТИКОВ В СЕК</div>
+                </div>
+                <div class="stat-box">
+                  <div class="lbl">КОЛЛИЗИЯ ПОЛОТНА</div>
+                  <div class="val">В ПАМЯТИ (АКТИВНА)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="slide-banner">
+            <div class="banner-text">Физика уже знает о дороге</div>
+            <div class="banner-pill">60 Hz TICK</div>
+          </div>
+        </div>
+
+        <!-- SLIDE 2 -->
+        <div class="slide-card s2" id="slide-1">
+          <div class="slide-header">
+            <div class="tag" style="--accent: #fee75c;">02 // ГРАФИЧЕСКИЙ ПОТОК</div>
+            <div class="page-num">2 / 5</div>
+          </div>
+          <div class="slide-title">ОЧЕРЕДЬ РЕНДЕРА ЗАБИТА</div>
+          <div class="slide-body">
+            <div class="queue-box">
+              <div class="queue-nums">
+                <div class="queue-val">128 / 128 КОМАНД</div>
+                <div class="queue-status">ПЕРЕПОЛНЕНИЕ</div>
+              </div>
+              <div class="queue-bar-wrap">
+                <div class="queue-bar-fill"></div>
+              </div>
+            </div>
+          </div>
+          <div class="slide-banner" style="--accent: #fee75c;">
+            <div class="banner-text">Кадр застрял в буфере отрисовки</div>
+            <div class="banner-pill" style="color:#fee75c; border-color:#fee75c;">LAG: 90 КАДРОВ</div>
+          </div>
+        </div>
+
+        <!-- SLIDE 3 -->
+        <div class="slide-card s3" id="slide-2">
+          <div class="slide-header">
+            <div class="tag" style="--accent: #ff2ea6;">03 // РАССИНХРОН ДВИЖКА</div>
+            <div class="page-num">3 / 5</div>
+          </div>
+          <div class="slide-title">ГРАФИКА ОТСТАЛА ОТ ФИЗИКИ</div>
+          <div class="slide-body">
+            <div class="desync-grid">
+              <div class="desync-card ok">
+                <div class="card-title">ФИЗИКА (PhysX)</div>
+                <div class="card-state">ТВЕРДАЯ</div>
+                <div class="card-desc">Коллизия дороги в RAM</div>
+              </div>
+              <div class="desync-card fail">
+                <div class="card-title">ВИДЕОКАРТА (GPU)</div>
+                <div class="card-state">ПУСТОТА</div>
+                <div class="card-desc">Текстура не доехала</div>
+              </div>
+            </div>
+          </div>
+          <div class="slide-banner" style="--accent: #ff2ea6;">
+            <div class="banner-text">Игрок едет по невидимому полотну</div>
+            <div class="banner-pill" style="color:#ff2ea6; border-color:#ff2ea6;">DESYNC</div>
+          </div>
+        </div>
+
+        <!-- SLIDE 4 -->
+        <div class="slide-card s4" id="slide-3">
+          <div class="slide-header">
+            <div class="tag" style="--accent: #ff4757;">04 // МОМЕНТ УДАРА</div>
+            <div class="page-num">4 / 5</div>
+          </div>
+          <div class="slide-title">УДАР В НЕВИДИМЫЙ БОРДЮР</div>
+          <div class="slide-body">
+            <div class="impact-box">
+              <div class="impact-badge">СТОЛКНОВЕНИЕ</div>
+              <div class="impact-sub">Бордюра нет на экране, но в физике он твердый!</div>
+            </div>
+          </div>
+          <div class="slide-banner" style="--accent: #ff4757;">
+            <div class="banner-text">Падение в момент прогрузки асфальта</div>
+            <div class="banner-pill" style="color:#ff4757; border-color:#ff4757;">IMPACT</div>
+          </div>
+        </div>
+
+        <!-- SLIDE 5 -->
+        <div class="slide-card s5" id="slide-4">
+          <div class="slide-header">
+            <div class="tag" style="--accent: #4ade80;">05 // ИСПРАВЛЕНИЕ</div>
+            <div class="page-num">5 / 5</div>
+          </div>
+          <div class="slide-title">ФИКС: ПРИОРИТЕТ ТЕКСТУР</div>
+          <div class="slide-body">
+            <div class="ide-box">
+              <div class="ide-head">
+                <div class="ide-dots"><div class="ide-dot r"></div><div class="ide-dot y"></div><div class="ide-dot g"></div></div>
+                <div class="ide-file">StreamingManager.cpp</div>
+                <div class="ide-badge">PATCHED</div>
+              </div>
+              <div class="ide-code">
+                <div><span class="kw">if</span> (Speed > <span class="str">100.0f</span>) {</div>
+                <div class="fix-line">  Streaming-><span class="fn">PrioritizeRoadMesh</span>(); <span class="kw">// FIX!</span></div>
+                <div>}</div>
+              </div>
+            </div>
+          </div>
+          <div class="slide-banner" style="--accent: #4ade80;">
+            <div class="banner-text">Дорога грузится раньше окружения</div>
+            <div class="banner-pill" style="color:#4ade80; border-color:#4ade80;">SUCCESS</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let currentSlide = 0;
+const totalSlides = 5;
+const slides = document.querySelectorAll('.slide-card');
+const dots = document.querySelectorAll('.dot');
+
+function showSlide(index) {
+  currentSlide = (index + totalSlides) % totalSlides;
+  
+  slides.forEach((slide, i) => {
+    slide.classList.remove('active', 'prev');
+    if (i === currentSlide) {
+      slide.classList.add('active');
+    } else if (i < currentSlide) {
+      slide.classList.add('prev');
+    }
+  });
+
+  dots.forEach((dot, i) => {
+    dot.classList.toggle('active', i === currentSlide);
+  });
+}
+</script>
+
+</body>
+</html>

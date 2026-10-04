@@ -212,7 +212,9 @@ class SmartCardGenerator:
         draw.text((120, 24), file_tab, fill="#abb2bf", font=self.font_code_bold)
 
         # Title
-        draw.text((self.width - 340, 22), title, fill="#61afef", font=self.font_bold_small)
+        t_bbox = draw.textbbox((0, 0), title, font=self.font_bold_small)
+        t_w = t_bbox[2] - t_bbox[0]
+        draw.text((self.width - t_w - 30, 22), title, fill="#61afef", font=self.font_bold_small)
 
         # Block 1: [-] WRONG CODE
         box1 = [16, 75, self.width - 16, 75 + w_box_h]

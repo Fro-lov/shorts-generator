@@ -26,7 +26,19 @@ def get_ffmpeg_path() -> str:
     except Exception:
         return "ffmpeg"
 
+def get_ffprobe_path() -> str:
+    try:
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        ffmpeg_dir = os.path.dirname(ffmpeg_exe)
+        ffprobe_exe = os.path.join(ffmpeg_dir, "ffprobe.exe")
+        if os.path.exists(ffprobe_exe):
+            return ffprobe_exe
+    except Exception:
+        pass
+    return "ffprobe"
+
 FFMPEG_PATH = get_ffmpeg_path()
+FFPROBE_PATH = get_ffprobe_path()
 
 # Video output settings (9:16 Shorts / TikTok standard)
 VIDEO_WIDTH = 1080

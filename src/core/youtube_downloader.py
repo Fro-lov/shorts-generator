@@ -25,7 +25,8 @@ class YouTubeDownloader:
 
         cmd = [
             "yt-dlp",
-            "-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best",
+            "--extractor-args", "youtube:player_client=android,web",
+            "-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best/18",
             "--ffmpeg-location", self.ffmpeg_path,
             "--force-overwrites",
             "-o", str(output_path)

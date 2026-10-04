@@ -77,7 +77,14 @@ Thumbs.db
 # Voices standalone directory
 voices/
 
-# Temporary test audio files
+# Temporary test audio files and directories
 test_*.mp3
 *.mp3
+test/
+scratch/
+assets/models/*
+!assets/models/.gitkeep
+test_*.txt
+*.tmp
+*.log
 

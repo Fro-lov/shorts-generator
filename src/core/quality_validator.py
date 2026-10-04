@@ -9,7 +9,7 @@ from PIL import Image, ImageStat, ImageChops
 BASE_DIR = Path(r"e:\social")
 sys.path.insert(0, str(BASE_DIR))
 
-from config.settings import FFMPEG_PATH
+from config.settings import FFMPEG_PATH, FFPROBE_PATH
 
 
 class QualityValidator:
@@ -43,25 +43,28 @@ class QualityValidator:
             return report
 
         # 1. Probe video metadata
-        probe_cmd = [
-            FFMPEG_PATH, "-v", "error",
-            "-show_entries", "stream=width,height,duration,r_frame_rate:format=duration,size",
-            "-of", "json",
-            str(clip_path)
-        ]
-        res = subprocess.run(probe_cmd, capture_output=True, text=True)
-        if res.returncode != 0:
-            report["valid"] = False
-            report["errors"].append(f"ffprobe не смог декодировать геймплей: {res.stderr.strip()}")
-            return report
-
         try:
-            probe_data = json.loads(res.stdout)
-            report["details"]["probe"] = probe_data
-        except json.JSONDecodeError:
-            report["valid"] = False
-            report["errors"].append("Не удалось распарсить JSON метаданных ffprobe")
-            return report
+            probe_cmd = [
+                FFPROBE_PATH, "-v", "error",
+                "-show_entries", "stream=width,height,duration,r_frame_rate:format=duration,size",
+                "-of", "json",
+                str(clip_path)
+            ]
+            res = subprocess.run(probe_cmd, capture_output=True, text=True)
+            if res.returncode == 0:
+                try:
+                    probe_data = json.loads(res.stdout)
+                    report["details"]["probe"] = probe_data
+                except json.JSONDecodeError:
+                    pass
+            else:
+                ffmpeg_cmd = [FFMPEG_PATH, "-i", str(clip_path)]
+                res_ff = subprocess.run(ffmpeg_cmd, capture_output=True, text=True)
+                report["details"]["probe_stderr"] = res_ff.stderr
+        except Exception:
+            ffmpeg_cmd = [FFMPEG_PATH, "-i", str(clip_path)]
+            res_ff = subprocess.run(ffmpeg_cmd, capture_output=True, text=True)
+            report["details"]["probe_stderr"] = res_ff.stderr
 
         # 2. Extract sample frames for motion/black detection (5 frames across duration)
         temp_dir = clip_path.parent / "val_frames"

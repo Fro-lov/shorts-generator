@@ -203,8 +203,9 @@ class PipelineRunner:
 
         # 3. Fetch Memes & SFX
         downloaded_memes = []
-        for idx_m, m_query in enumerate(["cat open mouth shocked gif", "car eject reaction gif"]):
-            m_path = self.meme_fetcher.get_or_download_meme(m_query, f"ep{self.episode_id}_{variant_name}_meme_{idx_m}.gif")
+        meme_queries = scenario.get("memes", ["blurry vision squinting glasses gif", "pixelated 8bit reaction gif"])
+        for idx_m, m_query in enumerate(meme_queries):
+            m_path = self.meme_fetcher.get_or_download_meme(m_query, f"ep{self.episode_id}_{variant_name}_meme_{idx_m}.gif", overwrite=False)
             if m_path and m_path.exists():
                 downloaded_memes.append(m_path)
 
@@ -221,38 +222,72 @@ class PipelineRunner:
         if not sfx_report["valid"]:
             print(f"⚠️ [SFX Validator Warning]: {sfx_report['errors']}")
 
-        ambient_file = BASE_DIR / "assets" / "music" / "ambient" / "ambient1.mp3"
+        ambient_dir = BASE_DIR / "assets" / "music" / "ambient"
+        ambient_candidates = sorted([f for f in ambient_dir.glob("*.mp3") if f.is_file()])
+        if ambient_candidates:
+            # Deterministically choose track based on episode id or use first
+            amb_idx = int(self.episode_id) % len(ambient_candidates) if self.episode_id.isdigit() else 0
+            ambient_file = ambient_candidates[amb_idx]
+        else:
+            ambient_file = BASE_DIR / "assets" / "music" / "investigation_ambient.wav"
+        print(f"[*] Background ambient track selected: {ambient_file.name}")
 
         # 4. FFmpeg Assembly with NVENC GPU
-        raw_clip = self.ep_dir / "temp" / "raw_download.mp4"
+        raw_clip = self.ep_dir / "temp" / "gameplay_clip.mp4"
         if not raw_clip.exists():
             raw_clip = self.ep_dir / "temp" / "raw_gameplay.mp4"
-            if not raw_clip.exists():
-                raw_clip = self.ep_dir / "preview_gameplay.mp4"
+        if not raw_clip.exists():
+            raw_clip = self.ep_dir / "temp" / "raw_download.mp4"
+        if not raw_clip.exists():
+            raw_clip = BASE_DIR / "assets" / "downloads" / f"ep{self.episode_id}_raw.mp4"
+
+        if not raw_clip.exists() or raw_clip == (self.ep_dir / "preview_gameplay.mp4"):
+            raise RuntimeError(
+                "STRICT ERROR: Clean raw gameplay clip not found! "
+                "Using preview_gameplay.mp4 is STRICTLY FORBIDDEN to avoid double framing."
+            )
+
+        print(f"[*] Using clean raw gameplay source clip: {raw_clip}")
 
         outro_motion = BASE_DIR / "output" / "templates" / "outro_subscribe_motion.mp4"
         output_mp4 = var_dir / "video.mp4"
+        dummy_card = BASE_DIR / "assets" / "placeholders" / "dummy_transparent.png"
 
-        d1_start = block_timings.get("diagram1", {}).get("start", 6.0)
-        d1_end = block_timings.get("diagram1", {}).get("end", 15.0)
+        def get_block_time(name_list, default_start, default_end):
+            for n in name_list:
+                if n in block_timings:
+                    return block_timings[n]["start"], block_timings[n]["end"]
+            return default_start, default_end
 
-        cc_start = block_timings.get("code_card", {}).get("start", 15.0)
-        cc_end = block_timings.get("code_card", {}).get("end", 26.0)
+        c1_start, c1_end = get_block_time(["diagram1", "diagram", "code_card"], 6.0, 15.0)
+        c2_start, c2_end = get_block_time(["diagram2", "fix"], 15.0, 26.0)
+        c3_start, c3_end = get_block_time(["fix", "diagram3", "code", "code_card"], 26.0, 36.0)
 
-        fix_start = block_timings.get("fix", {}).get("start", 26.0)
-        fix_end = block_timings.get("fix", {}).get("end", 36.0)
+        outro_start, outro_end = get_block_time(["outro"], total_duration - 4.0, total_duration)
 
-        outro_start = block_timings.get("outro", {}).get("start", 36.0)
-        outro_end = total_duration
+        # Ensure cards automatically stop before outro starts
+        c1_end = min(c1_end, c2_start)
+        c2_end = min(c2_end, c3_start)
+        c3_end = min(c3_end, outro_start)
+
+        c1_input = str(visual_cards[0].resolve()) if len(visual_cards) > 0 else str(dummy_card.resolve())
+        c2_input = str(visual_cards[1].resolve()) if len(visual_cards) > 1 else str(dummy_card.resolve())
+        c3_input = str(visual_cards[2].resolve()) if len(visual_cards) > 2 else str(dummy_card.resolve())
+
+        def get_card_input_args(c_path):
+            if str(c_path).lower().endswith(".gif"):
+                return ["-ignore_loop", "0", "-stream_loop", "-1", "-i", str(c_path)]
+            else:
+                return ["-loop", "1", "-i", str(c_path)]
 
         inputs = [
             "-stream_loop", "-1", "-i", str(raw_clip),                                          # [0:v] Gameplay
             "-i", str(full_voice_audio),                                                        # [1:a] Voice
-            "-loop", "1", "-i", str(visual_cards[0] if len(visual_cards)>0 else raw_clip),      # [2:v] Card 1
-            "-loop", "1", "-i", str(visual_cards[1] if len(visual_cards)>1 else raw_clip),      # [3:v] Card 2
-            "-loop", "1", "-i", str(visual_cards[2] if len(visual_cards)>2 else raw_clip),      # [4:v] Card 3
-            "-i", str(outro_motion),                                                            # [5:v][5:a] Outro Video
         ]
+        inputs.extend(get_card_input_args(c1_input))                                            # [2:v] Card 1
+        inputs.extend(get_card_input_args(c2_input))                                            # [3:v] Card 2
+        inputs.extend(get_card_input_args(c3_input))                                            # [4:v] Card 3
+        inputs.extend(["-i", str(outro_motion)])                                               # [5:v][5:a] Outro Video
 
         input_counter = 6
         meme_input_indices = []
@@ -281,66 +316,76 @@ class PipelineRunner:
         )
         last_v = "[v_base]"
 
-        # Meme 1 overlay at y=860
+        # Meme 1 overlay at y=860 (Opening Phase 1: 0.5s to 3.8s)
         if meme_input_indices:
-            inv_start = block_timings.get("investigation", {}).get("start", 3.0)
-            inv_end = min(inv_start + 2.5, block_timings.get("investigation", {}).get("end", 6.0))
+            m1_start = 0.5
+            m1_end = min(3.8, c1_start - 0.2)
             idx1 = meme_input_indices[0]
             filter_chains.append(
-                f"[{idx1}:v]scale=500:-1,format=rgba,fade=t=in:st={inv_start}:d=0.2:alpha=1,fade=t=out:st={inv_end-0.2}:d=0.2:alpha=1[meme1_fade];"
-                f"{last_v}[meme1_fade]overlay=(W-w)/2:860:enable='between(t,{inv_start},{inv_end})'[v_meme1]"
+                f"[{idx1}:v]scale=500:-1,format=rgba,fade=t=in:st={m1_start}:d=0.2:alpha=1,fade=t=out:st={m1_end-0.2}:d=0.2:alpha=1[meme1_fade];"
+                f"{last_v}[meme1_fade]overlay=(W-w)/2:860:enable='between(t,{m1_start},{m1_end})'[v_meme1]"
             )
             last_v = "[v_meme1]"
 
-        # Card 1 overlay (Bottom-aligned in Top 2/3 zone, native aspect ratio without stretching)
-        c1_path = visual_cards[0] if len(visual_cards) > 0 else None
-        c1_y = 80
-        if c1_path and c1_path.exists():
-            with Image.open(c1_path) as c1_img:
-                c1_y = max(80, 1360 - c1_img.height)
-
-        filter_chains.append(
-            f"[2:v]scale=1000:-1,format=rgba,fade=t=in:st={d1_start}:d=0.2:alpha=1,fade=t=out:st={d1_end-0.2}:d=0.2:alpha=1[c1_fade];"
-            f"{last_v}[c1_fade]overlay=(W-w)/2:{c1_y}:enable='between(t,{d1_start},{d1_end})'[v_c1]"
-        )
-        last_v = "[v_c1]"
+        # Card 1 overlay
+        if len(visual_cards) > 0 and visual_cards[0].exists():
+            c1_is_gif = str(visual_cards[0]).lower().endswith(".gif")
+            if c1_is_gif:
+                c1_scale = "scale=680:680"
+                c1_y = 790
+            else:
+                c1_scale = "scale=1000:-1"
+                with Image.open(visual_cards[0]) as c1_img:
+                    c1_y = max(80, 1360 - c1_img.height)
+            filter_chains.append(
+                f"[2:v]{c1_scale},format=rgba,fade=t=in:st={c1_start}:d=0.2:alpha=1,fade=t=out:st={c1_end-0.2}:d=0.2:alpha=1[c1_fade];"
+                f"{last_v}[c1_fade]overlay=(W-w)/2:{c1_y}:enable='between(t,{c1_start},{c1_end})'[v_c1]"
+            )
+            last_v = "[v_c1]"
 
         # Card 2 overlay
-        c2_path = visual_cards[1] if len(visual_cards) > 1 else None
-        c2_y = 80
-        if c2_path and c2_path.exists():
-            with Image.open(c2_path) as c2_img:
-                c2_y = max(80, 1360 - c2_img.height)
-
-        filter_chains.append(
-            f"[3:v]scale=1000:-1,format=rgba,fade=t=in:st={cc_start}:d=0.2:alpha=1,fade=t=out:st={cc_end-0.2}:d=0.2:alpha=1[c2_fade];"
-            f"{last_v}[c2_fade]overlay=(W-w)/2:{c2_y}:enable='between(t,{cc_start},{cc_end})'[v_c2]"
-        )
-        last_v = "[v_c2]"
+        if len(visual_cards) > 1 and visual_cards[1].exists():
+            c2_is_gif = str(visual_cards[1]).lower().endswith(".gif")
+            if c2_is_gif:
+                c2_scale = "scale=680:680"
+                c2_y = 790
+            else:
+                c2_scale = "scale=1000:-1"
+                with Image.open(visual_cards[1]) as c2_img:
+                    c2_y = max(80, 1360 - c2_img.height)
+            filter_chains.append(
+                f"[3:v]{c2_scale},format=rgba,fade=t=in:st={c2_start}:d=0.2:alpha=1,fade=t=out:st={c2_end-0.2}:d=0.2:alpha=1[c2_fade];"
+                f"{last_v}[c2_fade]overlay=(W-w)/2:{c2_y}:enable='between(t,{c2_start},{c2_end})'[v_c2]"
+            )
+            last_v = "[v_c2]"
 
         # Card 3 overlay
-        c3_path = visual_cards[2] if len(visual_cards) > 2 else None
-        c3_y = 80
-        if c3_path and c3_path.exists():
-            with Image.open(c3_path) as c3_img:
-                c3_y = max(80, 1360 - c3_img.height)
-
-        filter_chains.append(
-            f"[4:v]scale=1000:-1,format=rgba,fade=t=in:st={fix_start}:d=0.2:alpha=1,fade=t=out:st={fix_end-0.2}:d=0.2:alpha=1[c3_fade];"
-            f"{last_v}[c3_fade]overlay=(W-w)/2:{c3_y}:enable='between(t,{fix_start},{fix_end})'[v_c3]"
-        )
-        last_v = "[v_c3]"
-
-        # Meme 2 overlay at y=860
-        if len(meme_input_indices) > 1:
-            m2_start = min(fix_start + 1.0, fix_end - 2.0)
-            m2_end = min(m2_start + 2.5, fix_end)
-            idx2 = meme_input_indices[1]
+        if len(visual_cards) > 2 and visual_cards[2].exists():
+            c3_is_gif = str(visual_cards[2]).lower().endswith(".gif")
+            if c3_is_gif:
+                c3_scale = "scale=680:680"
+                c3_y = 790
+            else:
+                c3_scale = "scale=1000:-1"
+                with Image.open(visual_cards[2]) as c3_img:
+                    c3_y = max(80, 1360 - c3_img.height)
             filter_chains.append(
-                f"[{idx2}:v]scale=500:-1,format=rgba,fade=t=in:st={m2_start}:d=0.2:alpha=1,fade=t=out:st={m2_end-0.2}:d=0.2:alpha=1[meme2_fade];"
-                f"{last_v}[meme2_fade]overlay=(W-w)/2:860:enable='between(t,{m2_start},{m2_end})'[v_meme2]"
+                f"[4:v]{c3_scale},format=rgba,fade=t=in:st={c3_start}:d=0.2:alpha=1,fade=t=out:st={c3_end-0.2}:d=0.2:alpha=1[c3_fade];"
+                f"{last_v}[c3_fade]overlay=(W-w)/2:{c3_y}:enable='between(t,{c3_start},{c3_end})'[v_c3]"
             )
-            last_v = "[v_meme2]"
+            last_v = "[v_c3]"
+
+        # Meme 2 overlay at y=860 (Opening Phase 2: 3.8s to c1_start)
+        if len(meme_input_indices) > 1:
+            m2_start = 3.8
+            m2_end = max(m2_start + 1.5, c1_start - 0.2)
+            if m2_end > m2_start and m2_start < c1_start:
+                idx2 = meme_input_indices[1]
+                filter_chains.append(
+                    f"[{idx2}:v]scale=500:-1,format=rgba,fade=t=in:st={m2_start}:d=0.2:alpha=1,fade=t=out:st={m2_end-0.2}:d=0.2:alpha=1[meme2_fade];"
+                    f"{last_v}[meme2_fade]overlay=(W-w)/2:860:enable='between(t,{m2_start},{m2_end})'[v_meme2]"
+                )
+                last_v = "[v_meme2]"
 
         # Outro Motion Video Overlay
         filter_chains.append(
@@ -355,6 +400,21 @@ class PipelineRunner:
 
         # Audio Mixing
         audio_inputs_to_mix = ["[1:a]"]
+        has_gameplay_audio = False
+        try:
+            from config.settings import FFPROBE_PATH
+            probe = subprocess.run(
+                [FFPROBE_PATH, "-v", "error", "-select_streams", "a", "-show_entries", "stream=index", "-of", "csv=p=0", str(raw_clip)],
+                capture_output=True, text=True
+            )
+            if probe.stdout.strip():
+                has_gameplay_audio = True
+        except Exception:
+            pass
+
+        if has_gameplay_audio:
+            filter_chains.append("[0:a]atrim=0:4.0,afade=t=out:st=3.5:d=0.5,volume=0.8[gameplay_a]")
+            audio_inputs_to_mix.append("[gameplay_a]")
         filter_chains.append(f"[5:a]adelay={int(outro_start*1000)}|{int(outro_start*1000)}[outro_a]")
         audio_inputs_to_mix.append("[outro_a]")
 
@@ -365,7 +425,7 @@ class PipelineRunner:
             audio_inputs_to_mix.append("[sfx1_a]")
 
         if len(sfx_input_indices) > 1:
-            s2_start = block_timings.get("fix", {}).get("start", 26.0)
+            s2_start = c2_start
             sfx_idx2 = sfx_input_indices[1]
             filter_chains.append(f"[{sfx_idx2}:a]adelay={int(s2_start*1000)}|{int(s2_start*1000)},volume=0.16[sfx2_a]")
             audio_inputs_to_mix.append("[sfx2_a]")
@@ -389,7 +449,9 @@ class PipelineRunner:
             "-pix_fmt", "yuv420p",
             str(output_mp4)
         ]
-        subprocess.run(cmd, capture_output=True, text=True)
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        if res.returncode != 0:
+            print(f"FFMPEG ERROR (code {res.returncode}): {res.stderr}")
 
         # 5. Run Ironclad Post-Render Validation & Contact Sheet Creation
         val_res = self.validator.validate_assembled_video(output_mp4, block_timings)
@@ -399,11 +461,13 @@ class PipelineRunner:
                 grid_out = var_dir / "contact_sheet.jpg"
                 try:
                     self.validator.create_contact_sheet([Path(p) for p in snaps.values()], grid_out)
-                    print(f"✅ [Ironclad Validator] Assembled video verified. Contact sheet created: {grid_out}")
+                    print(f"OK: Assembled video verified. Contact sheet created: {grid_out}")
                 except Exception as ex:
-                    print(f"⚠️ Could not generate contact sheet: {ex}")
+                    print(f"Could not generate contact sheet: {ex}")
         else:
-            print(f"❌ [Ironclad Validator Error] Assembled video validation failed: {val_res['errors']}")
+            print(f"VALIDATION WARNING/ERROR for {variant_name}: {val_res['errors']}")
+
+        return output_mp4
 
         return output_mp4
 

@@ -144,7 +144,7 @@ class TTSEngine:
         return {
             "audio_path": str(output_audio_path),
             "events": sub_events,
-            "voice_used": target_voice,
+            "voice_used": used_voice,
             "role": role
         }
 
